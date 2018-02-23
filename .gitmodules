@@ -4,3 +4,6 @@
 [submodule "output"]
 	path = output
 	url = https://github.com/gabhijit/gabhijit.github.io.git
+[submodule "output2"]
+	path = output
+	url = https://github.com/gabhijit/gabhijit.github.io.git
