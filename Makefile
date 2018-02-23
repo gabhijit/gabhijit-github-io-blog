@@ -1,8 +1,9 @@
-PY?=venv/bin/python
-PELICAN?=venv/bin/pelican
+BASEDIR=$(CURDIR)
+
+PY?=$(BASEDIR)/venv/bin/python
+PELICAN?=$(BASEDIR)/venv/bin/pelican
 PELICANOPTS=
 
-BASEDIR=$(CURDIR)
 INPUTDIR=$(BASEDIR)/content
 OUTPUTDIR=$(BASEDIR)/output
 CONFFILE=$(BASEDIR)/pelicanconf.py
