@@ -1,6 +1,6 @@
-[submodule "output"]
-	path = output
-	url = https://github.com/gabhijit/gabhijit.github.io
 [submodule "themes"]
 	path = themes
 	url = https://github.com/getpelican/pelican-themes
+[submodule "output"]
+	path = output
+	url = https://github.com/gabhijit/gabhijit.github.io.git
