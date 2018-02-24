@@ -171,3 +171,16 @@ Mainly `tun` and `tap` interfaces are used to inject IP packets to/from kernel f
 
 To be able to use `tap` interface, one has to bind to the tap interface. The link above shows one example or a similar example from `qemu` source is [availble here](https://github.com/qemu/qemu/blob/08a63553161d9d12fba217f07af49f986b487e9a/net/tap-linux.c#L41)
 
+## References
+
+Following is a list of links on the web that I referred to while experimenting with Virtual Interfaces.
+
+1. [http://www.naturalborncoder.com/virtualization/2014/10/17/understanding-tun-tap-interfaces/]()
+2. [https://lists.linuxfoundation.org/pipermail/bridge/2011-June/007711.html]()
+3. [https://stackoverflow.com/questions/25641630/virtual-networking-devices-in-linux#34773334]()
+4. [http://www.opencloudblog.com/?p=66]()
+5. [https://unix.stackexchange.com/questions/122468/how-does-one-capture-traffic-on-virtual-interfaces]()
+6. [https://serverfault.com/questions/585246/network-level-of-veth-doesnt-respond-to-arp?newreg=fa2af6ce40ad43318ac4b32054741cd7]()
+7. [http://backreference.org/2013/06/20/some-notes-on-veth-interfaces/]()
+8. [https://serverfault.com/questions/743466/tcpdump-on-bridge-interface-virbr-does-not-receive-any-packets-destined-for-on]()
+
