@@ -1,8 +1,9 @@
 Title: Linux VRF with MPLS for L3-VPN
 Date: 2018-02-27
-Tags: Linux-networking, VRF, MPLS
+Tags: VRF, MPLS
 Slug: linux-vrf-mpls
 Author: Abhijit Gadgil
+Category: Linux Networking
 Summary: VRF support for Linux was added in kernel 4.5. In the Linux netdev 1.1 conference, there was a talk about this support, which showed one of the use-case as MPLS-VPN. This blog post tries to re-create the setup from demo on a kernel 4.15.
 
 ## VRF Background
@@ -46,3 +47,5 @@ Some references used for this experiment -
 ## Next steps
 
 While the script is fairly well organized, this is still very hard-coded for the above setup and totally inflexible. A better idea would be to make a small tool which can read topology and create setups easily. For example, something like a dot file reader that generates a yaml and a python script that generates topology using this YAML file.
+
+Also, this is a very static setup. Next step would be to run a routing daemon like [bird]() and try similar setup.
