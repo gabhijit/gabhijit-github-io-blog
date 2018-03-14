@@ -37,10 +37,13 @@ DISQUS_SITENAME = 'gabhijit-github-io'
 
 #THEME = "themes/foundation-default-colours"
 #THEME = "themes/Just-Read"
-THEME = "themes/tuxlite_tbs"
+THEME = "mythemes/tuxlite_tbs"
+TUXLITE_TBS_FRONTPAGE_FULL_ARTICLE = False
 
 DEFAULT_DATE_FORMAT = '%d/%m/%Y'
 REVERSE_ARCHIVE_ORDER = True
+
+USE_FOLDER_AS_CATEGORY = False
 
 # Uncomment following line if you want document-relative URLs when developing
 #RELATIVE_URLS = True

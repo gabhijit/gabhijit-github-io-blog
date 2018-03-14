@@ -1,9 +1,9 @@
 Title: Linux Virtual Interfaces
 Date: 2018-02-23
+Category: Linux Networking
 Tags: veth, tap, tun
 Slug: linux-virtual-interfaces
 Author: Abhijit Gadgil
-Category: Linux Networking
 Summary: Linux supports `veth` and `tun/tap` types of virtual interfaces, which are used by VMs, Containers for providing networking. This post summarizes certain findings as a result of experimenting these virtual interfaces along with Linux's Ethernet bridge.
 
 ## Background
