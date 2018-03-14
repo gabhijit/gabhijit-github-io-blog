@@ -1,0 +1,31 @@
+ul.tagcloud {
+  list-style: none;
+    padding: 0;
+}
+
+ul.tagcloud li {
+    display: inline-block;
+}
+
+li.tag-1 {
+    font-size: 200%;
+}
+
+li.tag-2 {
+    font-size: 150%;
+}
+
+li.tag-3 {
+    font-size: 120%;
+}
+
+li.tag-4 {
+    font-size: 100%;
+}
+
+ul.tagcloud .list-group-item <span>.badge {
+    background-color: grey;
+    color: white;
+}
+
+
