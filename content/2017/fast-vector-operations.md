@@ -4,6 +4,7 @@ Tags: pandas, numpy
 Category: Python Profiling
 Slug: vector-operations-are-fast-right
 Author: Abhijit Gadgil
+Status: Published
 Summary: Recently, for one of the projects we are working on, I was looking at processing data from Pandas panel. I wanted to find out certain `items` in a Panel based on certain criteria on the `minor axis`. I worked with two flavors and the findings for different data-sets are quite interesting. Something that would definitely qualify as an interesting learning. We discuss, how profiling can be successfully used to explain certain Performance behavior, that often looks counter-intuitive.
 
 ### A bit of a background

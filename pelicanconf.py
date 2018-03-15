@@ -34,6 +34,10 @@ SOCIAL = (('Github', 'https://github.com/gabhijit'),
 
 DEFAULT_PAGINATION = 10
 
+DEFAULT_METADATA = {
+        'status' : 'draft',
+        }
+
 DISQUS_SITENAME = 'gabhijit-github-io'
 
 #THEME = "themes/foundation-default-colours"

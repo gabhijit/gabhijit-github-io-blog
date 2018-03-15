@@ -4,6 +4,7 @@ Tags: python profiling, python-with-statement, context manager
 Category: Python
 Slug: python-profiling-context-manager
 Author: Abhijit Gadgil
+Status: Published
 Summary: Python's `cProfile` package provides mechanisms for profiling parts of Python code. In this article, we explore how we could use Python's Context Managers (`with` blocks) for profiling, so we can easily profile parts of code as required.
 
 Recently, was implementing a class, where, we wanted to be able to 'plug-in' profiling in some functions. Summarizing some of the requirements -

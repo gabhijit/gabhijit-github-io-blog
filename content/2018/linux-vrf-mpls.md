@@ -4,6 +4,7 @@ Category: Linux Networking
 Tags: VRF, MPLS, Linux
 Slug: linux-vrf-mpls
 Author: Abhijit Gadgil
+Status: Published
 Summary: VRF support for Linux was added in kernel 4.5. In the Linux netdev 1.1 conference, there was a talk about this support, which showed one of the use-case as MPLS-VPN. This blog post tries to re-create the setup from demo on a kernel 4.15.
 
 ## VRF Background
