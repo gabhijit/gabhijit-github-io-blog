@@ -1,9 +1,12 @@
 import logging
 
-module_logger = logging.getLogger(__name__)
-print __name__, module_logger.handlers, module_logger, module_logger.parent
+l = logging.getLogger(__name__)
+print "name:", __name__, "handlers:", l.handlers, "me:", l, "parent:", l.parent
 
-module_logger.warning("hi from baz")
+# Following won't get printed during import (as the RootLogger's handler is NullHandler)
+l.warning("hi from baz")
+
 
 def log():
-    module_logger.warning("hi again from baz")
+    # Following will be printed, if called after logger in application is setup with proper handler (say StreamHandler)
+    l.warning("hi again from baz")

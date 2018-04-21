@@ -1,7 +1,7 @@
 import logging
 
 
-module_logger = logging.getLogger(__name__)
-print __name__, module_logger.handlers, module_logger, module_logger.parent
+l = logging.getLogger(__name__)
+print "name:", __name__, "handlers:", l.handlers, "me:", l, "parent:", l.parent
 
-module_logger.warning("hi there")
+l.warning("hi there")

@@ -3,8 +3,8 @@ import logging
 
 fmt = '%(name)40s : %(asctime)s : %(message)s'
 
-module_logger  = logging.getLogger(__name__)
-module_logger.addHandler(logging.NullHandler())
+l  = logging.getLogger(__name__)
+l.addHandler(logging.NullHandler())
 
-print __name__, module_logger.handlers, module_logger, module_logger.parent
+print "name:", __name__, "handlers:", l.handlers, "me:", l, "parent:", l.parent
 
