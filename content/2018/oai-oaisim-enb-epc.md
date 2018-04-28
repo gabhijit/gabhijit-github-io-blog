@@ -30,7 +30,7 @@ Did face a few issues to get the build successful -
 
 1. The head of the develop branch was having issue with libconfig, so it was not possible to use the head of the develop branch.
 
-2. The original version for which documentation was available for setting up OAISIM with EPC, was 0.4, however it was not building on Ubuntu 16.04. The problem was some of the ASN.1 files for RRC were patched with an older version of [asn1c]() which was available for Ubuntu 14.04, so it was not possible to patch those files with asn1c available for Ubuntu 16.04. This required a little bit of figuring around to find out what was the latest enough and well tagged version. Version 0.6.1 works fine, that uses asn1c hosted on [eurocomm gitlab](https://gitlab.eurecom.fr/oai/asn1c).
+2. The original version for which documentation was available for setting up OAISIM with EPC, was 0.4, however it was not building on Ubuntu 16.04. The problem was some of the ASN.1 files for RRC were patched with an older version of `asn1c` which was available for Ubuntu 14.04, so it was not possible to patch those files with `asn1c` available for Ubuntu 16.04. This required a little bit of figuring around to find out what was the latest enough and well tagged version. Version 0.6.1 works fine, that uses asn1c hosted on [eurocomm gitlab](https://gitlab.eurecom.fr/oai/asn1c).
 
 3. Since both eNodeB and EPC will be running on same Kernel, a kernel version that supports GTP is required. GTP is available in the mainline Linux tree since Kernel version 4.7.0. My running kernel version was 4.15.0, so it should be possible to use the GTP module available in the kernel. However, the UE IP module inside the openairinterface5g repository that emulates the UE side was not getting built on the 4.15.0 kernel, this is because there was a slight change in the timer interface in the 4.15.X kernel. So I [patched](https://github.com/gabhijit/oai5g/blob/gabhijit-v0.6.1/openair2/NETWORK_DRIVER/UE_IP/device.c) the UE-IP module inside my repository, so that it got successfully compiled.
 
@@ -61,6 +61,21 @@ In trying to run OAI inside the same Linux machine, we are making use of network
 3. The eNodeB-SGW - S1-U interface is implemented as a 10.0.2.0/24 network
 4. The MME-SGW - S11 interface is implemented as a 10.0.3.0/24 network
 5. The HSS-Host implements another interface for communication between the HSS and MySQL running in default (host) namespace.
-6. The PGW - SGi interface is right now implemented as a 10.0.5.0/24 network through a bridge.
 
 Once all the setup is done, it should be possible to ping Internet from the simulated UE.
+
+## Miscellaneous Notes
+
+Some of the things in the above setup are less than ideal. Documenting those here for reference -
+
+1. MySQL database is used by HSS. It is possible to run the database in the HSS namespace. However, the above setup does not do so. Once this is done, no additional setup requirements for connecting to the database will be required.
+
+2. On the egrees ie. SGi interface we are using MacVTAP to connect to external world. MacVTAP interfaces do not work so well with WLAN interfaces. So it is recommended to use a wired Ethernet interface to use MacVTAP on the egress. Right now, not entirely sure of what's the best way to deal with that problem, one choice would be to use separate network and bridge it to external world and apply some kind of SNAT. This needs some more work.
+
+3. eNodeB does not run in it's own namespace. To be able to do that, the UE-IP driver should be patched to work in any network namespace. Right now it uses - `netlink_kernel_create` along with `&init_net` passed to it, which is the default namespace. This needs some more investigation.
+
+
+## Summary and Next Steps
+
+Since we are able to run individual nodes inside separate network namespace, containerizing this should be kind of straight forward. Will explore this in a subsequently.
+

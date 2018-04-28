@@ -26,7 +26,7 @@ This setup is explained in the [document](https://www.netdevconf.org/1.1/proceed
 ![VRF MPLS Topology](/images/vrf-mpls-topology.png "Topology")
 
 
-1. Each of the device (Host, CE, PE or P) lives in it's own `netns`. `veth` and `bridge` links are used as appropriate to connect the hosts (making sure also that their end-points are in the right `netns`.
+1. Each of the device (Host, CE, PE or P) lives in it's own `netns`. `veth` and `bridge` links are used as appropriate to connect the hosts (making sure also that their end-points are in the right `netns`).
 2. Linux implementation of `vrf` is a `netdevice`. So one VRF `netdevice` is created for each of the customer in the same PE router, thus there are two VRF `netdevice`s in the PE router.
 3. The physical devices (`veth` endpoints) that connect to the customer edge router (CE Router) are enslaved to the VRF `netdevice` corresponding to that customer.
 4. For each of the VRF `netdevice`, there's a separate routing table setup for lookup and corresponding `l3mdev` rules are added for making sure the packet lookup happens in the correct routing table.
