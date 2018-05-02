@@ -17,11 +17,11 @@ If you have done some Python programming, but unsure of what are the best practi
 Some knowledge of tools in Python ecosystem like `pip`, `virtualenv`, `pylint` is useful. If you have never heard about them, the discussion below might still be useful, but is definitely not an introduction or a tutorial on the usage of those tools.
 
 # Introduction
-Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is surely one of my favorite Python features so to speak, that quickly allows you to iterate over ideas. However, when you are working on a Python 'Project' that will involve a few packages, sub-packages and even a small number of modules with dependencies on external libraries in a collaborative environment, it's important to give thoughts to the development setup early enough. Some of the specific problems that we would like to address include -
-1. Avoiding run-time errors that are caused by undefined variable etc.
-2. Manage dependencies project uses, so that multiple projects can co-exists on a development machine.
+Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 amongst the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough. Some of the specific problems that we would like to address include -
+1. Avoiding run-time errors that are caused by undefined variable etc, this is especially true in an interpreted language like Python.
+2. Manage dependencies project uses, so that multiple projects can co-exists on a development machine. Chances are you are collaborating on more than one project which have conflicting dependencies.
 3. Produce identical builds across time and developer's platform.
-4. Be able to separate a development environment from a production environment.
+4. Be able to separate a development environment from a production environment, there are certain packages needed only on development and/or build setup but are not required on production setup (eg. unit-testing).
 
 All the problems discussed above have caused unpleasant surprises in a deployed application and it's quite possible to avoid those or at-least substantially decrease the occurrences of such problems.
 
