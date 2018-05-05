@@ -1,4 +1,5 @@
 Title: Contact
+Status: Published
 
 <form action="https://formspree.io/gabhijit@iitbombay.org" method="POST">
 	<fieldset>
