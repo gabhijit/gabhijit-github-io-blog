@@ -5,7 +5,7 @@ Tags: OAI, LTE, eNodeB, EPC, netns, Linux
 Slug: oai-oaisim-enb-epc-netns
 Author: Abhijit Gadgil
 Status: Published
-Summary: [OpenAirInterface](http://www.openairinterface.org/) aims to develop open source software solutions for 4G and 5G cellular network, that would run on COTS hardware (typically x86/ARM based CPUs). The project provides an Air Interface Simulator (OAISIM) and implementations of eNodeB and the EPC. OAISIM allows one to test the software implementations of the Network components, without actually having access to the RF part. While there are many tutorials that allow you to connect OAISIM + eNodeB on one machine and connect it with EPC (MME/SGW and PGW) running on another machine, I was not able to find any good tutorial that allowed to connect these devices on the same machine. While, it's quite possible to do so by using two VMs on the same machine, two VMs still looked like sub-optimal as in theory it looked quite possible to do this using Network Namespaces to provide isolations for individual box. Further, using network namespaces would allow to containerize this quite easily. Since the development platform I am using is also not the same one for which documentation is available, I had to do some tweaking to build the components as well. This blog post discusses this in details.
+Summary: [OpenAirInterface](http://www.openairinterface.org/) aims to develop open source software solutions for 4G and 5G cellular network, that would run on COTS hardware (typically x86/ARM based CPUs). The project provides an Air Interface Simulator (OAISIM) and implementations of eNodeB and the EPC. OAISIM allows one to test the software implementations of the Network components, without actually having access to the RF part. While there are many tutorials that allow you to connect OAISIM + eNodeB on one machine and connect it with EPC (MME/SGW and PGW) running on another machine, I was not able to find any good tutorial that allowed to connect these devices on the same machine. While, it's quite possible to do so by using two VMs on the same machine, two VMs still looked like sub-optimal as in theory it looked quite possible to do this using Network Namespaces to provide isolations for individual nodes. Further, using network namespaces would allow to containerize this quite easily. Since the development platform I am using is not exactly identical to the one for which documentation is available, I had to do some tweaking to build the components as well. This blog post discusses this in details.
 
 # Intended Audience
 
@@ -68,14 +68,16 @@ Once all the setup is done, it should be possible to ping Internet from the simu
 
 Some of the things in the above setup are less than ideal. Documenting those here for reference -
 
-1. MySQL database is used by HSS. It is possible to run the database in the HSS namespace. However, the above setup does not do so. Once this is done, no additional setup requirements for connecting to the database will be required.
+1. MySQL database is used by HSS. It is possible to run the database in the HSS namespace. However, the above setup does not do so. Once this is done, no additional configuration requirements for connecting to the database will be required.
 
 2. On the egrees ie. SGi interface we are using MacVTAP to connect to external world. MacVTAP interfaces do not work so well with WLAN interfaces. So it is recommended to use a wired Ethernet interface to use MacVTAP on the egress. Right now, not entirely sure of what's the best way to deal with that problem, one choice would be to use separate network and bridge it to external world and apply some kind of SNAT. This needs some more work.
 
-3. eNodeB does not run in it's own namespace. To be able to do that, the UE-IP driver should be patched to work in any network namespace. Right now it uses - `netlink_kernel_create` along with `&init_net` passed to it, which is the default namespace. This needs some more investigation.
+3. eNodeB does not run in it's own namespace. To be able to do that, the UE-IP driver should be patched to work in any network namespace. Right now it uses - `netlink_kernel_create` along with `&init_net` passed to it, which is the default namespace. This needs some more investigation. Update: This is fixed in `ue_ip.ko` kernel module and the latest changes are [updated in this repository](https://github.com/gabhijit/oai5g). This needs some more testing to say this works.
 
 
 ## Summary and Next Steps
 
-Since we are able to run individual nodes inside separate network namespace, containerizing this should be kind of straight forward. Will explore this in a subsequently.
+Since we are able to run individual nodes inside separate network namespace, containerizing this should be kind of straight forward. Will explore this in a follow up.
+
+If anyone wants to try this out on any platform, please do so and if you face any problems, please create issues in the repositories, so that I can fix those.
 
