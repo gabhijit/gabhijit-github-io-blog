@@ -4,7 +4,8 @@ Category: Python Development
 Tags: pylint, pip, pipenv, virtualenv
 Slug: python-dev-environment-2
 Author: Abhijit Gadgil
-Summary: In the [first post](), we looked at what are typical issues in setting up Python project workflows and took an overview of the tools of the trade. In this post, we are going to be looking closely at `pipenv` a tool for managing Python project dependencies.
+[//] # FIXME : Need to fix the link to draft
+Summary: In the [first post](/drafts/python-dev-environment.html), we looked at what are typical issues in setting up Python project workflows and took an overview of the tools of the trade. In this post, we are going to be looking closely at `pipenv` a tool for managing Python project dependencies. In particular we are looking at how `pipenv` will help us solve the problems of reproducible builds and managing dev and production environments properly as described in the post mentioned above.
 
 # Intended Audience
 
@@ -16,56 +17,235 @@ To better understand some of the issues we are addressing in this document, havi
 
 As seen in Part 1 of the series of blog, `requirements.txt` file can be used to track external dependencies of our project. Often, one may not necessarily have a separate `requirements.txt` file, but the dependencies can be tracked directly in the `setup.py` if one is using `setuptools` for building, installing and publishing the project. The way this works is `setup` function in `setuptools` takes an argument called `install_requires` and typically this list is generated from the `requirements.txt` file above, with something very simple like `install_requires=open('requirements.txt', 'r').readlines()`. This will make sure whenever we are trying to `install` the project, these dependencies (and their dependencies) are installed as well.
 
-One of the challenges with `requirements.txt`, when using [semantic versioning]() (which is always recommended) is whether to specify exact versions of dependencies (using eg. say `requests==2.18.4`) or using the versions that are compatible with our Project. While it may be desirable to use latest compatible versions, it might resulting in different builds at different times of the same project (commit as well) to result in using different versions of dependencies and hence the builds are no longer reproducible, so it probably is a good idea to use fixed versions of dependencies and whenever the dependencies are updated, they undergo a proper testing and then a newer version of project can use newer version of dependencies.
+One of the challenges with `requirements.txt`, when using [semantic versioning](https://semver.org/) (which is always recommended) is whether to specify exact versions of dependencies (using eg. say `requests==2.18.4`) or using the versions that are compatible with our Project. While it may be desirable to use latest compatible versions, it might resulting in different builds at different times of the same project (commit as well) to result in using different versions of dependencies and hence the builds are no longer reproducible, so it probably is a good idea to use fixed versions of dependencies and whenever the dependencies are updated, they undergo a proper testing and then a newer version of project can use newer version of dependencies.
 
-As we have seen `pip freeze` can be used to generate exact version of dependencies installed. However this is still not most ideal, the reason being `pip freeze` will collect all dependencies (which is good), but won't tell us which dependencies were installed to satisfy which dependencies or in other words, it doesn't show dependency graphs and how they are resolved.
+As we have seen `pip freeze` can be used to generate exact version of dependencies installed. However this is still not most ideal, the reason being `pip freeze` will collect all dependencies (which is good), but won't tell us which dependencies were installed to satisfy which dependencies or in other words, it doesn't show dependency graphs and how they are resolved. This means even 'dev' dependencies are collected by `pip freeze`, which is something we don't want.
 
-We might require separate environment for development and separate environment for deployment. Some of the dependencies that were installed during development are often not required in a deployment environment (eg. tools like `pylint` that are used for code linting, or `mock`, `unittest` that are used for unit-testing etc.) Usually it's not a harm to install those in a deployment environment as well, but more software on the production machine means bigger attack surface usually so it's best avoided.
+We might require separate environment for development and separate environment for deployment. Some of the dependencies that were installed during development are often not required in a deployment environment (eg. tools like `pylint` that are used for code linting, or `mock`, `unittest` that are used for unit-testing etc.) Usually it's not a harm to install those in a deployment environment as well, but more software on the production machine means bigger attack surface, which usually is best avoided.
 
 So how do we solve this issue? In comes `pipenv`. Next we'll look at some sample use of `pipenv` and how the problem described above can be addressed and some things to keep in mind.
 
-# Dependencies
+# 'pipenv' A Quick Overview
 
-Every project is likely to have dependencies on some libraries that are developed separately and maintained by someone else. In fact effectively tracking dependencies, can become quite a challenging task. Let's look at some of the challenges -
+[`pipenv`](https://github.com/pypa/pipenv) is a recommended tool for Python packaging and it tries to bring the features available for packaging in things like `npm`, `cargo`, `bundler` etc. A project's dependencies are provided in a file called `Pipfile`. `pipenv` then along with `Pipfile` and companion `Pipfile.lock` provides the necessary tooling. A more detailed list of `pipenv` [features is available here](https://github.com/pypa/pipenv#-features). Also, with `pipenv`, there is no need to manage `virtualenv` for the project. It is managed automatically by the `pipenv`. It's highly recommended to read more about it's documentation above. Just like `pip`, it's possible to provide dependencies from a VCS or your local file-system. Also, it's quite easy to manage the development environment as most of the `pipenv` commands support an option called `--dev`, that is extremely useful. Next we'd take a look at a simple `pipenv` based workflow that I usually follow.
 
-## Conflicting Dependencies
+# `pipenv` A simple workflow.
 
-While Python's standard library is quite extensive, almost always we need a functionality that is better provided by some packages. A very good example is the [requests]() package, which is a great substitute for the Python standard library's `httplib` or `urllib2`. It's very likely that you have a code-base that works with a specific version of `requests` (say version-a) and another code-base that work with another version of `requests` (say version-b) and unfortunately they are incompatible. The two code bases are not related to each other, so likely you would want to use both the versions in the respective code base. Python solves this problem using a tool called `virtualenv`. What `virtualenv` essentially does is creates a self contained Python environment in a single directory and does tricks with `sys.path` such that the Python interpreter finds packages and modules from inside this directory. Think of this as a Python equivalent of `chroot`, loosely speaking. In fact, if a developed Python application is going to be containerized, `virtualenv` will almost be a required one.
+This section explains how `pipenv` manages your environment, for a quick usable workflow go directly to [summary section below]()
 
-Key Takeaway : *Every project should have it's on `virtualenv`.*
+Usually, your project may already have a `requirements.txt`, so the first step in getting started with `pipenv` is generating a `Pipfile`. This can be done as follows
+
+```bash
+gabhijit@dev:~/foo/pipenv-foo$ pipenv install
+Creating a virtualenv for this project…
+Using /usr/bin/python (2.7.12) to create virtualenv…
+⠋Already using interpreter /usr/bin/python
+New python executable in /home/gabhijit/.local/share/virtualenvs/pipenv-foo-Y9xwmvqn/bin/python
+Installing setuptools, pip, wheel...done.
+
+Virtualenv location: /home/gabhijit/.local/share/virtualenvs/pipenv-foo-Y9xwmvqn
+Creating a Pipfile for this project…
+Pipfile.lock not found, creating…
+Locking [dev-packages] dependencies…
+Locking [packages] dependencies…
+Updated Pipfile.lock (dfae9f)!
+Installing dependencies from Pipfile.lock (dfae9f)…
+  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 0/0 — 00:00:00
+To activate this project's virtualenv, run the following:
+ $ pipenv shell
+gabhijit@dev:~/foo/pipenv-foo$
+
+```
+This created empty `Pipfile` and `Pipfile-lock`. It also created a virtual environment for us. Next is to add some dependencies to your project. Let's say we want to add `requests` as a dependency on our project. Also, while developing we are going to use `pylint` for code checking/verification. So we specify these dependencies as follows in the `Pipfile`.
+
+```
+gabhijit@dev:~/foo/pipenv-foo$ cat Pipfile
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+pylint = "*"
+
+[packages]
+requests = "*"
+
+[requires]
+python_version = "2.7"
+```
+and then we simply say `pipenv update` and this updates the `Pipfile.lock` as follows (output truncated.)
+```
+gabhijit@dev:~/foo/pipenv-foo$ cat Pipfile.lock
+
+{
+    "_meta": {
+        "hash": {
+            "sha256": "a91b34418a47e89f73a94acd1be60e7a60c9dace59cd436ddbe25fb315cb3fb8"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "2.7"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "certifi": {
+            "hashes": [
+                "sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7",
+                "sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"
+            ],
+            "version": "==2018.4.16"
+        },
+        "chardet": {
+            "hashes": [
+                "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae",
+                "sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"
+            ],:
+            "version": "==3.0.4"
+        },
+        "idna": {
+            "hashes": [
+                "sha256:2c6a5de3089009e3da7c5dde64a141dbc8551d5b7f6cf4ed7c2568d0cc520a8f",
+                "sha256:8c7309c718f94b3a625cb648ace320157ad16ff131ae0af362c9f21b80ef6ec4"
+            ],
+            "version": "==2.6"
+        },
+        "requests": {
+            "hashes": [
+                "sha256:6a1b267aa90cac58ac3a765d067950e7dbbf75b1da07e895d1f594193a40a38b",
+                "sha256:9c443e7324ba5b85070c4a818ade28bfabedf16ea10206da1132edaa6dda237e"
+            ],
+            "index": "pypi",
+            "version": "==2.18.4"
+        },
+        "urllib3": {
+            "hashes": [
+                "sha256:06330f386d6e4b195fbfc736b297f58c5a892e4440e54d294d7004e3a9bbea1b",
+                "sha256:cc44da8e1145637334317feebd728bd869a35285b93cbb4cca2577da7e62db4f"
+            ],
+            "version": "==1.22"
+        }
+    },
+    "develop": {
+        "astroid": {
+            "hashes": [
+                "sha256:35cfae47aac19c7b407b7095410e895e836f2285ccf1220336afba744cc4c5f2",
+                "sha256:38186e481b65877fd8b1f9acc33e922109e983eb7b6e487bd4c71002134ad331"
+            ],
+            "version": "==1.6.3"
+        },
+        "backports.functools-lru-cache": {
+            "hashes": [
+                "sha256:9d98697f088eb1b0fa451391f91afb5e3ebde16bbdb272819fd091151fda4f1a",
+                "sha256:f0b0e4eba956de51238e17573b7087e852dfe9854afd2e9c873f73fc0ca0a6dd"
+            ],
+            "markers": "python_version == '2.7'",
+            "version": "==1.5"
+        },
+        ....
+        ....
+    },
+}
+```
+It has three sections `_meta` that information is about the `virtualenv`, Python Version, Pypi source etc. Then there are sections `default`, this corresponds to Project's dependencies and then there is section `develop`, which corresponds to Project's dependencies in development environment. Separating Project's dependencies from the development dependencies is a really neat thing. Also, notice each dependency has got a list of hashes and the current version that is installed. We'll see how this can be later used for generating `requirements.txt` file. Note here, all the standard `pip` commands like `pip install`, `pip freeze` etc. work as it is in the `pipenv`. But they are generally not required to be run (during development at-least).
+
+`pipenv` also supports a command called `pipenv graph` that shows how each dependencies are resolved (from both `develop` and `default`). For our particular project, this looks like -
+
+```
+gabhijit@dev:~/foo/pipenv-foo$ pipenv graph
+pylint==1.8.4
+  - astroid [required: >=1.6,<2.0, installed: 1.6.3]
+    - backports.functools-lru-cache [required: Any, installed: 1.5]
+    - enum34 [required: >=1.1.3, installed: 1.1.6]
+    - lazy-object-proxy [required: Any, installed: 1.3.1]
+    - singledispatch [required: Any, installed: 3.4.0.3]
+      - six [required: Any, installed: 1.11.0]
+    - six [required: Any, installed: 1.11.0]
+    - wrapt [required: Any, installed: 1.10.11]
+  - backports.functools-lru-cache [required: Any, installed: 1.5]
+  - configparser [required: Any, installed: 3.5.0]
+  - isort [required: >=4.2.5, installed: 4.3.4]
+    - futures [required: Any, installed: 3.2.0]
+    - futures [required: Any, installed: 3.2.0]
+  - mccabe [required: Any, installed: 0.6.1]
+  - singledispatch [required: Any, installed: 3.4.0.3]
+    - six [required: Any, installed: 1.11.0]
+  - six [required: Any, installed: 1.11.0]
+requests==2.18.4
+  - certifi [required: >=2017.4.17, installed: 2018.4.16]
+  - chardet [required: >=3.0.2,<3.1.0, installed: 3.0.4]
+  - idna [required: >=2.5,<2.7, installed: 2.6]
+  - urllib3 [required: <1.23,>=1.21.1, installed: 1.22]
+```
+
+This manages dependencies well, but to be able to generate reproducible builds we need 'fixed' versions of packages to be installed (or known - how to install), or in other words, we do require `requirements.txt` file (and `dev-requirements.txt` file). `pipenv` makes generating these files extremely easy with `pipenv lock` command as shown below -
+
+```
+gabhijit@dev:~/foo/pipenv-foo$ pipenv lock -r
+-i https://pypi.org/simple
+certifi==2018.4.16
+chardet==3.0.4
+idna==2.6
+requests==2.18.4
+urllib3==1.22
+  warnings.warn(warn_message, ResourceWarning)
+gabhijit@dev:~/foo/pipenv-foo$ pipenv lock -r --dev
+-i https://pypi.org/simple
+astroid==1.6.3
+backports.functools-lru-cache==1.5; python_version < '3.4'
+configparser==3.5.0; python_version == '2.7'
+enum34==1.1.6; python_version < '3.4'
+futures==3.2.0
+isort==4.3.4
+lazy-object-proxy==1.3.1
+mccabe==0.6.1
+pylint==1.8.4
+singledispatch==3.4.0.3; python_version < '3.4'
+six==1.11.0
+wrapt==1.10.11
+```
+
+Note above, `pipenv` also added the source from which these versions are to be donwloaded, which is kind of very useful (so during build some different source won't be accidentally used.)
+You might see a warning as below, but it can be safely ignored -
+```
+/home/gabhijit/.local/lib/python2.7/site-packages/pipenv/utils.py:1288: ResourceWarning: Implicitly cleaning up <TemporaryDirectory '/tmp/pipenv-EMQAPo-requirements'>
+```
+
+So what we do now is - used the output generated above to populate `requirements.txt` and `dev-requirements.txt` respectively.
+
+# 'pipenv' Workflow Summary
+
+All of this can be summarized as follows (assuming you are starting for a brand new-project) -
+
+1. Start with `pipenv install`
+
+2. Add necessary project requirements. Read [here]() why it is better to give a "*" as a dependency than a fixed version.
+
+3. `pipenv update`
+
+4. `pipenv lock -r > requirements.txt`
+
+5. `pipenv lock -r --dev > dev- requirements.txt`
+
+6. In your build system use `pip` to install dependencies like `pip install -r requirements.txt`. This would avoid installing dependencies from `dev-requirements.txt` during build. Since all the versions of packages are fixed, it will always generate reproducible builds.
+
+7. Later, whenever the dependencies are to be updated (for security fixes say), go to step 3. and follow again.
 
 
-## Transitive Dependencies
+# Few More Points
 
-We have looked at how `virtualenv` could help us solve the problem of conflicting dependencies on a developer's machine. However, now when we look at an individual project, how do we install the dependencies. One good thing about `virtualenv` is, when you create a virtual environment, it installs `pip` Python's recommended package manager inside the virtual environment. So one should always use this `pip` for installing additional dependencies.
+1. VCS repositories - `pipenv` allows to use dependencies from the VCS directly (something that `pip` supports as well.) The exact syntax for this is as follows - In the `Pipfile` mention the dependency as follows
+```
+tickerplot = { git = "https://github.com/gabhijit/tickerplot.git", ref="v0.0.4", editable="True" }
+```
+Note: here it is required to give `editable=True` or else `pipenv lock -r` won't list the subsequent dependencies of the dependencies taken from the `git` repository above.
 
-A small digression here before we look more at dependencies and transitive dependencies. Typically if you are using Linux platform for development, your distribution will also provide the distribution specific versions of Python packages (like `rpm` or `deb`) supported by the package manager of your distribution (like `yum` or `apt`). Whenever you are developing using Python you should *never* use these packages - often these packages are outdated, second their dependencies come as distribution specific packages like `rpm` or `deb` (and not as pip packages) and they are not so straight forward to use in a virtual environment.
-
-One of the advantages of using `pip` is, if the package you are using has dependencies itself, they are also installed recursively till all dependencies are resolved.
-
-Key Takeaway : *Always use `pip` to install dependencies in a virtual environment created by `virtualenv`*
-
-## Reproducibility
-
-Once we start with a virtual environment and use `pip` to install packages, often we have a pretty good starting point for the Project's development. It may not though be enough or always optimal. For example a question one might want to ask is - should the virtual environment itself be maintained inside `git`? It's not a very bad idea, but probably not a recommended one. A natural question then is how can a team collaborate effectively? One of the ways to solve that problems is by maintaining a `requirements.txt` file, that lists down your dependencies and their respective versions and instead maintain that file in a `git` repository. `pip` allows installing packages listed in a file using a command like `pip -r requirements.txt` say. Pip also allows a command called `pip freeze` that looks at currently installed packages in a `virtualenv` and generates a list of packages with their version. So something like `pip freeze > requirements.txt` would help you generate the `requirements.txt` and then this file can be tracked in `git`. So someone cloning (or forking) the repository can simply do a `pip -r requirements.txt` after cloning the repository and would have identical versions of packages installed (well almost - we'd look at a subtle issue and how to fix that later.)
-
-Key Takeaway : *Use a `requirements.txt` file to track your dependencies and generate it using `pip freeze`.*
-
-# Separate Environments
-
-What we have described so far should be 'good enough' when starting a project. However when the scope of the project starts improving, unit tests are added, coding guidelines are to be enforced, there might be more needed to be done than what we have discussed so far. Let's look at some of the challenges. What `pip freeze` does is it lists down all the packages (with their installed versions) that are installed by pip. But let's consider this - You want to run some unit tests while building a project and you are using tools like `nose` to do so and have installed it using `pip`, `pip freeze` will catch that for you as well. In a development environment you want to run certain sanity checks etc and are using tools like `pylint` (see below for more about `pylint`), but may be you don't want those in a production environment. So you want to kind of keep the installed dependencies in a development environment different from those in production environment, tools like `pipenv` help yo fix that problem. In the next article of this series, we are going to take a closer look at `pipenv`.
-
-# Code Quality
-
-Often as the size of a team working on a project grows, it is often not sufficient to simply document 'recommended' practices and conventions, there needs to be a way to enforce some. (for instance you might want your code to strictly adhere to `pep8` and code not conforming to `pep8` is not admissible). Python also being a weakly typed and interpreted languages, a number of errors show up at the run-time, so it's a better practice to actually use some code linting tools that will analyze your code (often without running it) and highlight potential errors that can be easily fixed during the development itself. In a subsequent post we will take a more detailed look at `pylint` and how it can be integrated into the development workflow to ensure certain code quality.
-
-
-# Summary
-
-In this part, we discussed typical challenges in developing a Python project from an ecosystem perspective and provided an overview of some tools that can help address. In summary, following just the three simple practices should start as a good starting point
-1. Every Project should have it's own `virtualenv`.
-2. Always use `pip` to install dependencies in a virtual environment created by `virtualenv`.
-3. Use `requirements.txt` file to track your dependencies and generate it using `pip freeze`.
-
-In remaining parts we would look at how to use `pipenv` to setup separate Development and Production environments, how to use `pylint` and integrate it as a `git pre-commit hook` to enforce certain coding standards and automatically check for errors in Python code without waiting for them to show up at run-time.
+2. Starting with existing `requirements.txt` file - If there's an already exisiting `requirements.txt` file, `Pipfile` will pick up the exact versions from the `requirements.txt` and you won't be able to `upgrade` to newer versions without fixing this first.
 

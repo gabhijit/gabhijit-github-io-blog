@@ -18,9 +18,13 @@ Some knowledge of tools in Python ecosystem like `pip`, `virtualenv`, `pylint` i
 
 # Introduction
 Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 amongst the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough. Some of the specific problems that we would like to address include -
+
 1. Avoiding run-time errors that are caused by undefined variable etc, this is especially true in an interpreted language like Python.
+
 2. Manage dependencies project uses, so that multiple projects can co-exists on a development machine. Chances are you are collaborating on more than one project which have conflicting dependencies.
+
 3. Produce identical builds across time and developer's platform.
+
 4. Be able to separate a development environment from a production environment, there are certain packages needed only on development and/or build setup but are not required on production setup (eg. unit-testing).
 
 All the problems discussed above have caused unpleasant surprises in a deployed application and it's quite possible to avoid those or at-least substantially decrease the occurrences of such problems.
@@ -66,8 +70,11 @@ Often as the size of a team working on a project grows, it is often not sufficie
 # Summary
 
 In this part, we discussed typical challenges in developing a Python project from an ecosystem perspective and provided an overview of some tools that can help address. In summary, following just the three simple practices should start as a good starting point
+
 1. Every Project should have it's own `virtualenv`.
+
 2. Always use `pip` to install dependencies in a virtual environment created by `virtualenv`.
+
 3. Use `requirements.txt` file to track your dependencies and generate it using `pip freeze`.
 
 In remaining parts we would look at how to use `pipenv` to setup separate Development and Production environments, how to use `pylint` and integrate it as a `git pre-commit hook` to enforce certain coding standards and automatically check for errors in Python code without waiting for them to show up at run-time.
