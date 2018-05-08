@@ -1,23 +1,23 @@
 Title: Python Project Workflows - Part 1
-Date: 2018-04-24
-Category: Python Development
-Tags: pylint, pip, pipenv, virtualenv
+Date: 2018-05-08
+Category: Python
+Tags: pylint, pip, pipenv, virtualenv, Python
 Slug: python-dev-environment
 Author: Abhijit Gadgil
-Summary: In a Python based development, tools like `pylint`, `pipenv` and `virtualenv` become important pieces of your development workflow. In the first part of the series of blog posts, an overview of typical problems faced and how those can be addressed. In subsequent posts we look at more advanced usages like - separate Development and Production environments and enforcing certain coding standards.
+Summary: In a Python based development, tools like `pylint`, `pipenv` and `virtualenv` become important pieces of your development workflow. In the first part of the series of blog posts, we look at overview of the issues that become important as the scope of the project and size of the team working on project increases. In later posts in these series, we would try to address these issues one by one, we look at starting a project, identifying and resolving dependencies 'correctly', why reproducible builds matter, how to separate development and production environment and eventually how to containerize the application.
 
 # Intended Audience
-
-Also, working knowledge of VCS like `git` might be useful because the discussion below assumes that you are developing project in a VCS like `git`. You should be using `git` even if you do not want to follow any of the workflow discussed here.
-
-If you have forked a project and are unsure of what some of those files in the projects like `requirements.txt`, `Pipfile`, `Pipfile.lock`, `setup.py` are, this should help you develop some understanding of that.
 
 If you have done some Python programming, but unsure of what are the best practices to follow in a slightly bigger project, this post will offer you some choices (since best choices are often very subjective there is no one good practice.)
 
 Some knowledge of tools in Python ecosystem like `pip`, `virtualenv`, `pylint` is useful. If you have never heard about them, the discussion below might still be useful, but is definitely not an introduction or a tutorial on the usage of those tools.
 
+Also, working knowledge of VCS like `git` might be useful because the discussion below assumes that you are developing project in a VCS like `git`. You should be using `git` even if you do not want to follow any of the workflow discussed here.
+
+If you have forked a project and are unsure of what some of those files in the projects like `requirements.txt`, `Pipfile`, `Pipfile.lock`, `setup.py` are, this should help you develop some understanding of that.
+
 # Introduction
-Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 amongst the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough. Some of the specific problems that we would like to address include -
+Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 among the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough, rather than 'overlay' some workflow later. Some of the specific problems that we would like to address include -
 
 1. Avoiding run-time errors that are caused by undefined variable etc, this is especially true in an interpreted language like Python.
 
@@ -29,7 +29,7 @@ Whenever I have an idea to try out, my simplest workflow is either open a Python
 
 All the problems discussed above have caused unpleasant surprises in a deployed application and it's quite possible to avoid those or at-least substantially decrease the occurrences of such problems.
 
-Since there are a number of tools out there, which in some combination help solve the problems, what we discuss below are how some of those tools can be used to address the challenge.
+Since there are a number of tools out there, which in some combination help solve the problems, what we discuss below are how some of those tools can be used to address the challenge. First let's look at the problems in little more details
 
 # Dependencies
 
@@ -37,7 +37,7 @@ Every project is likely to have dependencies on some libraries that are develope
 
 ## Conflicting Dependencies
 
-While Python's standard library is quite extensive, almost always we need a functionality that is better provided by some packages. A very good example is the [requests]() package, which is a great substitute for the Python standard library's `httplib` or `urllib2`. It's very likely that you have a code-base that works with a specific version of `requests` (say version-a) and another code-base that work with another version of `requests` (say version-b) and unfortunately they are incompatible. The two code bases are not related to each other, so likely you would want to use both the versions in the respective code base. Python solves this problem using a tool called `virtualenv`. What `virtualenv` essentially does is creates a self contained Python environment in a single directory and does tricks with `sys.path` such that the Python interpreter finds packages and modules from inside this directory. Think of this as a Python equivalent of `chroot`, loosely speaking. In fact, if a developed Python application is going to be containerized, `virtualenv` will almost be a required one.
+While Python's standard library is quite extensive, almost always we need a functionality that is better provided by some packages. A very good example is the [requests](http://docs.python-requests.org/en/master/) package, which is a great substitute for the Python standard library's `httplib` or `urllib2`. It's very likely that you are simultaneously working on two projects where one project works with a specific version of `requests` (say version-a) and another works with another version of `requests` (say version-b) and unfortunately they are incompatible. The two code bases are not related to each other, so likely you would want to use both the versions with the respective code base. Python solves this problem using a tool called `virtualenv`. What [`virtualenv`](https://virtualenv.pypa.io/en/stable/) essentially does is creates a self contained Python environment in a single directory and does tricks with Python's system path (`sys.path`) such that the Python interpreter finds packages and modules from inside this directory. Think of this as a Python equivalent of `chroot`, loosely speaking. In fact, if a developed Python application is going to be containerized, `virtualenv` will almost be a required one. So it's always a recommended practice to start a project with it's own `virtualenv`.
 
 Key Takeaway : *Every project should have it's on `virtualenv`.*
 
@@ -52,9 +52,9 @@ One of the advantages of using `pip` is, if the package you are using has depend
 
 Key Takeaway : *Always use `pip` to install dependencies in a virtual environment created by `virtualenv`*
 
-## Reproducibility
+## Deterministic Builds (or Build Reproducibility)
 
-Once we start with a virtual environment and use `pip` to install packages, often we have a pretty good starting point for the Project's development. It may not though be enough or always optimal. For example a question one might want to ask is - should the virtual environment itself be maintained inside `git`? It's not a very bad idea, but probably not a recommended one. A natural question then is how can a team collaborate effectively? One of the ways to solve that problems is by maintaining a `requirements.txt` file, that lists down your dependencies and their respective versions and instead maintain that file in a `git` repository. `pip` allows installing packages listed in a file using a command like `pip -r requirements.txt` say. Pip also allows a command called `pip freeze` that looks at currently installed packages in a `virtualenv` and generates a list of packages with their version. So something like `pip freeze > requirements.txt` would help you generate the `requirements.txt` and then this file can be tracked in `git`. So someone cloning (or forking) the repository can simply do a `pip -r requirements.txt` after cloning the repository and would have identical versions of packages installed (well almost - we'd look at a subtle issue and how to fix that later.)
+Once we start with a virtual environment and use `pip` to install packages, often we have a pretty good starting point for the Project's development. It may not though be enough or always optimal. For example a question one might want to ask is - should the virtual environment itself be maintained inside `git`? It's not a very bad idea, but probably not a recommended one. A natural question then is how can a team collaborate effectively? One of the ways to solve that problems is by maintaining a `requirements.txt` file, that lists down your dependencies and their respective versions and instead maintain that file in a `git` repository. `pip` allows installing packages listed in a file using a command like `pip -r requirements.txt` say. Pip also allows a command called `pip freeze` that looks at currently installed packages in a `virtualenv` and generates a list of packages with their installed version. So something like `pip freeze > requirements.txt` would help you generate the `requirements.txt` and then this file can be tracked in `git`. Someone cloning (or forking) the repository can simply do a `pip -r requirements.txt` after cloning the repository and would have identical versions of packages installed (well almost - we'd look at a subtle issue and how to fix that later.)
 
 Key Takeaway : *Use a `requirements.txt` file to track your dependencies and generate it using `pip freeze`.*
 
@@ -66,7 +66,6 @@ What we have described so far should be 'good enough' when starting a project. H
 
 Often as the size of a team working on a project grows, it is often not sufficient to simply document 'recommended' practices and conventions, there needs to be a way to enforce some. (for instance you might want your code to strictly adhere to `pep8` and code not conforming to `pep8` is not admissible). Python also being a weakly typed and interpreted languages, a number of errors show up at the run-time, so it's a better practice to actually use some code linting tools that will analyze your code (often without running it) and highlight potential errors that can be easily fixed during the development itself. In a subsequent post we will take a more detailed look at `pylint` and how it can be integrated into the development workflow to ensure certain code quality.
 
-
 # Summary
 
 In this part, we discussed typical challenges in developing a Python project from an ecosystem perspective and provided an overview of some tools that can help address. In summary, following just the three simple practices should start as a good starting point
@@ -77,5 +76,5 @@ In this part, we discussed typical challenges in developing a Python project fro
 
 3. Use `requirements.txt` file to track your dependencies and generate it using `pip freeze`.
 
-In remaining parts we would look at how to use `pipenv` to setup separate Development and Production environments, how to use `pylint` and integrate it as a `git pre-commit hook` to enforce certain coding standards and automatically check for errors in Python code without waiting for them to show up at run-time.
+In remaining parts we would look at how to use `pipenv` to setup separate Development and Production environments, how to use `pylint` and integrate it as a `git pre-commit hook` to enforce certain coding standards and automatically check for errors in Python code without waiting for them to show up at run-time and how a Python project can be containerized.
 

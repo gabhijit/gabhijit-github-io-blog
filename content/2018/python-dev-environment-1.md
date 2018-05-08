@@ -1,6 +1,6 @@
 Title: Python Project Workflows - Part 2
 Date: 2018-05-06
-Category: Python Development
+Category: Python
 Tags: pylint, pip, pipenv, virtualenv
 Slug: python-dev-environment-2
 Author: Abhijit Gadgil
