@@ -1,7 +1,7 @@
 Title: Linux VRF with MPLS for L3-VPN
 Date: 2018-02-27
 Category: Linux Networking
-Tags: VRF, MPLS, Linux
+Tags: VRF, MPLS, Linux, netns
 Slug: linux-vrf-mpls
 Author: Abhijit Gadgil
 Status: Published
