@@ -8,22 +8,11 @@ Summary: Recently, for one of the projects we are working on, I was looking at p
 
 ### A bit of a background
 
-One of the applications we are developing is a system of processing historical NSE equities data. What we are developing is a system, where, based on certain criteria relating to historical data of a stock or a set of stocks, one could narrow down the universe of stocks from 'all' stocks in NSE to a few that match certain criteria.
-Typically, such criteria will be input by a user as a query to filter stocks. eg. A user might want to query, stocks that are trading above 50 monthly EMA. A design goal of such this system is, one should be able to perform such filtering in 'interactive' time frames, typically not more than few seconds with a budget of not more than 20-30 seconds.
+We are building a stock filtering system based upon certain criteria. So we have a data-frame that has got a major axis indexed by date (or time-stamps) a few minor axes (or columns) say about 4 and 5. And a collection of such data-frames organized as a Pandas Panel. A typical query would be like look at one of the columns and check for certain condition, and then choose all such data-frames where this condition holds true.
 
-The challenges involved in developing such systems are manifold, if you don't use any public APIs like [Quandl](https://www.quandl.com/) or [Kite](https://kite.zerodha.com/) and rely entirely on NSE Bhavcopy data, you have to do a lot of heavy lifting yourself. After doing [considerable heavy lifting](https://github.com/gabhijit/tickpdownload), we started doing some experiments.
-The experiments will typically be of the following two kinds -
+More specifically, if we are looking at historical stocks data and we want to look for stocks that closed positively yesterday. Note, this would typically be some computation based on a column.
 
-1. *What* make good filtering criteria - This is what a lot of 'investors' would typically be interested.
-2. *How* do you solve the problems that meet the above design goals - viz. run-time queries (so you cannot pre-compute and store data) answered in 'interactive' time frames.
-
-The eventual goal is to develop a 'service' that can be offered to users.
-
-### So coming to concrete problem
-
-We are mainly going to be concerned about the *How* question here. We are going to make use of [pandas](http://pandas.pydata.org/) features to achieve the stuff we are trying to arrive. So at a high level, the idea is - A pandas `Panel` that has got a list of 'stocks' as `items` and we have each `item` which has historical data as a `DataFrame` with date as `index` and 'OHLC' as columns. Since our focus is not on so much on *What* questions to ask, we will take a simple criterion which is stock having a positive close ie. last close is higher than previous close. ie. to put simplistically - `DataFrame.iloc[-1] > DataFraome.iloc[-2]`.
-
-The first solution that I came up with based on List Comprehension -
+For instance, the following code selects all stocks which closed in green.
 
 ```python
 pan = pd.Panel(scripdata_dict)
@@ -34,7 +23,7 @@ sels = [pan[x]['close'][-1] > pan[x]['close'][-2] for x in pan]
 
 ```
 
-However, after looking at this, it's clearly not a 'fast' 'vector' operation. So likely there's a faster way of doing this using 'vector' operations, after all that's what `numpy` and hence `pandas` is extremely good at. A following approach based on using `transpose` could be useful. I am not sure whether this is 'the fastest way' or there could be an even better way. But we'd continue exploring the following approach -
+Since one would typically use `pandas` or the underlying `numpy` for data parallel (vector) operations, an approach based on list comprehension probably isn't the most optimal one. So I looked at ways in which this operation can be performed as a 'vector' operation. `pandas` in fact provides a `transpose` function, which can be used to achieve what we are trying to achieve what we are trying to achieve using the list comprehension method above. Note that there might be other ways as well, `transpose` seems like one alternative worth exploring further.
 
 ```python
 # Create a transpose of the Panel, now `items` become major axis.
@@ -48,11 +37,9 @@ pan11 = pan[cl2.index]
 
 ```
 
-This looked clean. To test this, I had a toy data that I was experimenting with just small data of 20 or so rows (I often use such toy data when iterating over an approach, so that you don't end up spending a lot of time in loading the data itself.) Indeed, this approach is about *20-40 times faster*, based on some simple `time.time()` time delta computation. So the basic intuition is right, it's indeed very fast or Is it?.
+This looks good so far. To test this, I had a toy data that I was experimenting with just small data of 20 or so rows (I often use such toy data when iterating over an approach, so that you don't end up spending a lot of time in loading the data itself.) Indeed, this approach is about *20-40 times faster*, based on some simple `time.time()` time delta computation. So the basic intuition was right, so it was worthwhile following this line of thought and  find out how fast the 'vector' operation was on the actual dataset about 1500 items, about 6000-7000 rows and about 4-5 columns. While, I have a reasonable working knowledge of `pandas`, I am far from an expert and have only some background in `numpy`. So I did not have an idea about how the particular pieces might be implemented (eg. `transpose` here.). So when the above two approaches were compared on the actual dataset, the 'vector' approach was actually *3-4 times slower* than the first List Comprehension based approach. Oops! Seriously? First impression in such cases is something else must be wrong. So I started looking at explanations, while the former I was running on my desktop, dedicated CPU and the latter I was running on a VPS, could that be a problem? May be I should eliminate that variable first. So I tried the 'toy data' on the VPS, still the results are about the same. So clearly, something else is happening.
 
-While, I have a reasonable working knowledge of `pandas`, I am far from an expert and have only some background in `numpy`. So I did not have an idea about how the particular pieces might be implemented (eg. `transpose` here.). Surely, basic test also suggests, it's worth a try. So now we take the code and run it against 'real data' - about 3000 (about 150 times original data) rows per `DataFrame` in a Panel, and the same code now runs about *3-4 times slower* than the first List Comprehension based approach. Oops! Seriously? First impression in such cases is something else must be wrong. So I started looking at explanations, while the former I was running on my desktop, dedicated CPU and the latter I was running on a VPS, could that be a problem? May be I should eliminate that variable first. So I tried the 'toy data' on the VPS, still the results are about the same. So clearly, something else is wrong.
-
-The next question was - how do I find out? My first (and quite wrong at that honestly) effort would be to use the `dtrace` support in Python and use some `perf` counters or tracing tools from the [bcc](https://github.com/iovisor/bcc) to find out. Incidentally, that support is not there in Python 2.7 I am having on my Ubuntu machine. So what next? Let's run Python's native profilers and find out. Is the intuition even correct? So ran a simple profiling experiment by using the `cProfile` and `pstats`. The code looks like following - fairly straight forward.
+The next question was - how do I find out? My first (and quite wrong at that honestly) effort would be to use the `dtrace` support in Python and use some `perf` counters or tracing tools from the [bcc](https://github.com/iovisor/bcc) to find out. Incidentally, that support is not there in Python 2.7 I am having on my Ubuntu machine. So what next? Let's run Python's native profilers and find out. Is the intuition even correct? So ran a simple profiling experiment by using the `cProfile` and `pstats`. The code looks like following - is fairly straight forward.
 
 For the 'Vector' method -
 
@@ -226,7 +213,7 @@ and for the Vector method -
 
 ```
 
-Eureka! The `transpose` function has become extremely expensive for this big data. Note, the number of function calls is still about the same, about 7000 vs. 500000, but at-least some of the functions have become expensive and interestingly the total cost was actually growing sub-linearly for the List Comprehension method.
+Aha! The `transpose` function has become extremely expensive for this big data. Note, the number of function calls is still about the same, about 7000 vs. 500000, but at-least some of the functions have become expensive and interestingly the total cost was actually growing sub-linearly for the List Comprehension method.
 
 Now, when one looks at this data, it's clearly not that counter intuitive. We are doing a `memcpy` of a huge array in the `transpose` method and that's likely is a cause of real slowdown. While in the former case, there was still `memcpy`, but on a data that could probably fit easily in cache (or at-least was quite cache friendly) compared to this. A lesson from 'networking data-path 101' don't do `memcpy` in the fast path.
 
@@ -236,16 +223,19 @@ We need to still follow this line of thought and find out more about what's happ
 2. Does that make sense with the cache size on my computer?
 3. Indeed look at the `perf` counters and see cache statistics.
 
-Will write a follow up on this to actually find out what the findings above are.
+Will write a follow up on this to actually find out what the findings above are, but for now list-comprehension based approach is the one we are going to use forward.
+
+# Summary
 
 Few lessons learned here -
 
 * Just don't go by what theoretically makes sense. Know precisely what you are trying to do and what scale.
-* RTFM - because clearly [documentation on transpose](http://pandas.pydata.org/pandas-docs/version/0.20.3/generated/pandas.Panel.transpose.html) says, for Mixed-dtype data, will always result in a copy.
+* Always a good idea to read the documentation - because clearly [documentation on transpose](http://pandas.pydata.org/pandas-docs/version/0.20.3/generated/pandas.Panel.transpose.html) says, for Mixed-dtype data, will always result in a copy (Although, to be honest, it's quite likely to be missed, even after reading the manual, that there's a copy and one would still be going about doing things as above.)
 * Sometimes not having an expert around is not a bad idea, because you develop better understanding by making mistakes.
 
 And a few collateral benefits -
 
 1. Had an actual use-case for studying `cProfile` rather than trying some simple 'hello world!' stuff.
+
 2. Learned about a beautiful tool [gprof2dot](https://github.com/jrfonseca/gprof2dot), when trying to find out more about the actual call-graphs and find out the culprits. It's worth checking out.
 
