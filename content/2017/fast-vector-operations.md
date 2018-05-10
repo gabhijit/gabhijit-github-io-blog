@@ -4,15 +4,16 @@ Tags: pandas, numpy, Python
 Category: Python
 Slug: vector-operations-are-fast-right
 Author: Abhijit Gadgil
+Status: Published
 Summary: Recently, for one of the projects we are working on, I was looking at processing data from Pandas panel. I wanted to find out certain `items` in a Panel based on certain criteria on the `minor axis`. I worked with two flavors and the findings for different data-sets are quite interesting. Something that would definitely qualify as an interesting learning. We discuss, how profiling can be successfully used to explain certain Performance behavior, that often looks counter-intuitive.
 
 ### A bit of a background
 
 We are building a stock filtering system based upon certain criteria. So we have a data-frame that has got a major axis indexed by date (or time-stamps) a few minor axes (or columns) say about 4 and 5. And a collection of such data-frames organized as a Pandas Panel. A typical query would be like look at one of the columns and check for certain condition, and then choose all such data-frames where this condition holds true.
 
-More specifically, if we are looking at historical stocks data and we want to look for stocks that closed positively yesterday. Note, this would typically be some computation based on a column.
+For instance, if we are looking at historical stocks data and we want to look for stocks that closed positively yesterday. This is a simple example for illustration, typically the criteria will be some computation like say exponential moving average based upon user input values, but the overall findings won't substantially change, since such a computation will be carried out first and then some criteria applied.
 
-For instance, the following code selects all stocks which closed in green.
+Following code selects all stocks that closed in green yesterday. -
 
 ```python
 pan = pd.Panel(scripdata_dict)
@@ -23,7 +24,7 @@ sels = [pan[x]['close'][-1] > pan[x]['close'][-2] for x in pan]
 
 ```
 
-Since one would typically use `pandas` or the underlying `numpy` for data parallel (vector) operations, an approach based on list comprehension probably isn't the most optimal one. So I looked at ways in which this operation can be performed as a 'vector' operation. `pandas` in fact provides a `transpose` function, which can be used to achieve what we are trying to achieve what we are trying to achieve using the list comprehension method above. Note that there might be other ways as well, `transpose` seems like one alternative worth exploring further.
+Since one would typically use `pandas` or the underlying `numpy` for data parallel (vector) operations, an approach based on list comprehension probably isn't the most optimal one. So I looked at ways in which this operation can be performed as a 'vector' operation. `pandas` in fact provides a `transpose` function, which can be used to achieve what we are trying to achieve using the list comprehension method above. Note that there might be other ways as well, `transpose` seems like one alternative worth exploring further.
 
 ```python
 # Create a transpose of the Panel, now `items` become major axis.
@@ -37,9 +38,9 @@ pan11 = pan[cl2.index]
 
 ```
 
-This looks good so far. To test this, I had a toy data that I was experimenting with just small data of 20 or so rows (I often use such toy data when iterating over an approach, so that you don't end up spending a lot of time in loading the data itself.) Indeed, this approach is about *20-40 times faster*, based on some simple `time.time()` time delta computation. So the basic intuition was right, so it was worthwhile following this line of thought and  find out how fast the 'vector' operation was on the actual dataset about 1500 items, about 6000-7000 rows and about 4-5 columns. While, I have a reasonable working knowledge of `pandas`, I am far from an expert and have only some background in `numpy`. So I did not have an idea about how the particular pieces might be implemented (eg. `transpose` here.). So when the above two approaches were compared on the actual dataset, the 'vector' approach was actually *3-4 times slower* than the first List Comprehension based approach. Oops! Seriously? First impression in such cases is something else must be wrong. So I started looking at explanations, while the former I was running on my desktop, dedicated CPU and the latter I was running on a VPS, could that be a problem? May be I should eliminate that variable first. So I tried the 'toy data' on the VPS, still the results are about the same. So clearly, something else is happening.
+This looks good so far. To test this, I had a toy data that I was experimenting with just small data of 20 or so rows (I often use such toy data when iterating over an approach, so that you don't end up spending a lot of time in loading the data itself.) Indeed, this approach is about *20-40 times faster*, based on some simple `time.time()` time delta computation. So the basic intuition was right, so it was worthwhile following this line of thought and  find out how fast the 'vector' operation was on the actual dataset about 1500 items, about 3000-4000 rows and about 4-5 columns. While, I have a reasonable working knowledge of `pandas`, I am far from an expert and have only some background in `numpy`. So I did not have an idea about how the particular pieces might be implemented (eg. `transpose` here.). So when the above two approaches were compared on the actual dataset, the 'vector' approach was actually *3-4 times slower* than the first List Comprehension based approach. Oops! Seriously? First impression in such cases is something else must be wrong. So I started looking at explanations, while the list comprehension based approach I was running on my desktop, dedicated CPU and the vector computation based approach I was running on a VPS, could that be a problem? May be I should eliminate that variable first. So I tried the 'toy data' on the VPS, still the results are about the same. So clearly, something else is happening.
 
-The next question was - how do I find out? My first (and quite wrong at that honestly) effort would be to use the `dtrace` support in Python and use some `perf` counters or tracing tools from the [bcc](https://github.com/iovisor/bcc) to find out. Incidentally, that support is not there in Python 2.7 I am having on my Ubuntu machine. So what next? Let's run Python's native profilers and find out. Is the intuition even correct? So ran a simple profiling experiment by using the `cProfile` and `pstats`. The code looks like following - is fairly straight forward.
+The next question was - how do I find out? My first (and quite wrong at that honestly) effort would be to use the `dtrace` support in Python and use some `perf` counters or tracing tools from the [bcc](https://github.com/iovisor/bcc) to find out. Incidentally, that support is not there in Python 2.7 I am having on my Ubuntu machine. So what next? Let's run Python's native profilers and find out. Is the intuition even correct? Then I ran a simple profiling by using the `cProfile` package and `pstats`. The code looks like following - is fairly straight forward.
 
 For the 'Vector' method -
 
@@ -67,7 +68,7 @@ now0 = time.time()
 
 ```
 
-and for the 'List Comprehension' method -
+For the 'List Comprehension' method -
 
 ```python
 then0 = time.time()
@@ -91,6 +92,8 @@ now0 = time.time()
 ```
 
 Here are the actual Profiling outputs for run on 'small data'.
+
+First line is the time, second line is the filtered items and then detailed dumps from the 'profiler' output.
 
 For the List Comprehension method -
 
@@ -156,7 +159,7 @@ For the Vector method -
 
 So the data also - justifies the basic intuition, in the case of 'vector' method, there are about 7000 calls compared to about '500000' calls to functions, justifying that _may be_ we are doing more work in the List Comprehensions method.
 
-So why is this so bad? Let's see what it looks like on the real data. Spoiler Alert: A good observer would have noticed that `'copy' method of 'numpy.ndarray' objects` already.
+So why is this so bad? Let's see what it looks like on the real data. Spoiler Alert: A good observer would have noticed that `method 'copy' of 'numpy.ndarray' objects` already.
 
 Below is the profiling output on the actual data that is about 3000 rows in a DataFrame.
 
@@ -238,4 +241,3 @@ And a few collateral benefits -
 1. Had an actual use-case for studying `cProfile` rather than trying some simple 'hello world!' stuff.
 
 2. Learned about a beautiful tool [gprof2dot](https://github.com/jrfonseca/gprof2dot), when trying to find out more about the actual call-graphs and find out the culprits. It's worth checking out.
-

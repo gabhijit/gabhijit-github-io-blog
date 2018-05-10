@@ -4,6 +4,7 @@ Category: Python
 Tags: pylint, pip, pipenv, virtualenv, Python
 Slug: python-dev-environment
 Author: Abhijit Gadgil
+Status: Published
 Summary: In a Python based development, tools like `pylint`, `pipenv` and `virtualenv` become important pieces of your development workflow. In the first part of the series of blog posts, we look at overview of the issues that become important as the scope of the project and size of the team working on project increases. In later posts in these series, we would try to address these issues one by one, we look at starting a project, identifying and resolving dependencies 'correctly', why reproducible builds matter, how to separate development and production environment and eventually how to containerize the application.
 
 # Intended Audience
@@ -17,9 +18,9 @@ Also, working knowledge of VCS like `git` might be useful because the discussion
 If you have forked a project and are unsure of what some of those files in the projects like `requirements.txt`, `Pipfile`, `Pipfile.lock`, `setup.py` are, this should help you develop some understanding of that.
 
 # Introduction
-Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 among the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough, rather than 'overlay' some workflow later. Some of the specific problems that we would like to address include -
+Whenever I have an idea to try out, my simplest workflow is either open a Python file in `vim` and then simply run `python file.py` or sometimes just fire a Python interactive shell and do stuff. This is #1 among the things that I love about Python as it allows you to quickly iterate over ideas. However, when the scope of things you are trying to do goes beyond a single Python file and what is provided by Python standard library, the above workflow can start becoming at the very least inadequate and even full of unpleasant surprises in some cases. Things become even more challenging when there are multiple developers working on the project. So usually, it's probably a good idea to give some thoughts to the development setup early enough, rather than 'overlay' some workflow later. Some of the specific issues that we would like to address include -
 
-1. Avoiding run-time errors that are caused by undefined variable etc, this is especially true in an interpreted language like Python.
+1. Avoiding run-time errors that are caused by undefined variable etc, this is especially required in an interpreted language like Python.
 
 2. Manage dependencies project uses, so that multiple projects can co-exists on a development machine. Chances are you are collaborating on more than one project which have conflicting dependencies.
 
@@ -27,9 +28,9 @@ Whenever I have an idea to try out, my simplest workflow is either open a Python
 
 4. Be able to separate a development environment from a production environment, there are certain packages needed only on development and/or build setup but are not required on production setup (eg. unit-testing).
 
-All the problems discussed above have caused unpleasant surprises in a deployed application and it's quite possible to avoid those or at-least substantially decrease the occurrences of such problems.
+All the issues discussed above have caused unpleasant surprises in a deployed application and it's quite possible to avoid those or at-least substantially decrease the occurrences of such issues.
 
-Since there are a number of tools out there, which in some combination help solve the problems, what we discuss below are how some of those tools can be used to address the challenge. First let's look at the problems in little more details
+Since there are a number of tools out there, which in some combination will prove quite useful, what we discuss below are how some of those tools can be used to address the challenge. First let's look at the problems in little more details
 
 # Dependencies
 
@@ -50,11 +51,13 @@ A small digression here before we look more at dependencies and transitive depen
 
 One of the advantages of using `pip` is, if the package you are using has dependencies itself, they are also installed recursively till all dependencies are resolved.
 
-Key Takeaway : *Always use `pip` to install dependencies in a virtual environment created by `virtualenv`*
+Also, one of the recommended practice is to use your distributions packages for `pip` and `python` and then use that `pip` to install your project's dependencies.
+
+Key Takeaway : *Always use `pip` to install dependencies in a virtual environment created by `virtualenv` for the project*
 
 ## Deterministic Builds (or Build Reproducibility)
 
-Once we start with a virtual environment and use `pip` to install packages, often we have a pretty good starting point for the Project's development. It may not though be enough or always optimal. For example a question one might want to ask is - should the virtual environment itself be maintained inside `git`? It's not a very bad idea, but probably not a recommended one. A natural question then is how can a team collaborate effectively? One of the ways to solve that problems is by maintaining a `requirements.txt` file, that lists down your dependencies and their respective versions and instead maintain that file in a `git` repository. `pip` allows installing packages listed in a file using a command like `pip -r requirements.txt` say. Pip also allows a command called `pip freeze` that looks at currently installed packages in a `virtualenv` and generates a list of packages with their installed version. So something like `pip freeze > requirements.txt` would help you generate the `requirements.txt` and then this file can be tracked in `git`. Someone cloning (or forking) the repository can simply do a `pip -r requirements.txt` after cloning the repository and would have identical versions of packages installed (well almost - we'd look at a subtle issue and how to fix that later.)
+Once we start with a virtual environment and use `pip` to install packages, often we have a pretty good starting point for the Project's development. It may not though be enough or always optimal. For example a question one might want to ask is - should the virtual environment itself be maintained inside `git`? It's not a very bad idea, but probably not a recommended one. A natural question then is how can a team collaborate effectively? One of the ways to solve that problem is by maintaining a `requirements.txt` file, that lists down your dependencies and their respective versions and instead maintain that file in a `git` repository. `pip` allows installing packages listed in a file using a command like `pip -r requirements.txt`. Pip also allows a command called `pip freeze` that looks at currently installed packages in a `virtualenv` and generates a list of packages with their installed version. (Note: strictly speaking pip can also look at packages installed in the standard system path on the machine, but as discussed already, we will typically use `pip` that `virtualenv` installs, we are only looking at dependencies installed in a `virtualenv`.) So something like `pip freeze > requirements.txt` would help you generate the `requirements.txt` and then this file can be tracked in `git`. Someone cloning (or forking) the repository can simply do a `pip -r requirements.txt` after cloning the repository (and creating the `virtualenv`.) and would have identical versions of packages installed (well almost - we'd look at a subtle issue and how to fix that later.)
 
 Key Takeaway : *Use a `requirements.txt` file to track your dependencies and generate it using `pip freeze`.*
 

@@ -4,13 +4,14 @@ Tags: profiling, python-with-statement, Python
 Category: Python
 Slug: python-profiling-context-manager
 Author: Abhijit Gadgil
+Status: Published
 Summary: Profiling your code to identify hotspots or potential performance issues can prove quite useful. Python provides a `cProfile` package in the standard library provides this functionality for deterministic profiling. Usually, one might want to have an ability to turn profiling on and off at the run-time if possible. We explore a mechanism based on context managers in Python (Python `with` syntax) to be able to do so.
 
 # Introduction
 
-Recently, while implementing a class for a project, we needed to profile parts of the code as some of the observations [were quite un-intuitive](). It was also important to identify the parts of code that were expensive and the kind of time they would take (strictly speaking profiling using `cProfile` won't be able to help much here.). Loosely speaking the requirements can be summarized as follows -
+Recently, while implementing a class for a project, we needed to profile parts of the code as some of the observations [were quite un-intuitive](/vector-operations-are-fast-right.html). It was also important to identify the parts of code that were expensive and the kind of time they would take (strictly speaking profiling using `cProfile` won't be able to help much here.). Broadly the requirements can be summarized as follows -
 
-1. Ability to add profiling information in several places in code. (Something like `cProfile.Profile().enable()` and `cProfile.Profile.disable()` done frequently.
+1. Ability to add profiling information in several places in code. (Something like `cProfile.Profile().enable()` and `cProfile.Profile.disable()` done frequently.)
 
 2. Ability to enable profiling globally or not, so when globally disabled, it should add a minimum overhead.
 
@@ -47,7 +48,7 @@ if self.profiling_enabled:
 
 # Implementation
 
-The complete implementation for the `class Profiler` looks like following taken from [tickerplot utils]().
+The complete implementation for the `class Profiler` looks like following taken from [tickerplot utils](https://github.com/gabhijit/tickerplot/blob/master/tickerplot/utils/profiler.py).
 
 ```python
 
@@ -154,7 +155,7 @@ TypeError: Cannot create or construct a <class pstats.Stats at 0x7f683bec19a8> o
 
 2. Just like the normal `__exit__` mechanism, returning `False` would make sure, if the running code within a `with` block raised an exception, that gets re-raised (as we often do not want to interfere with the Application's exception handing.).
 
-3. This works quite well in a nested 'context' (ie. a `with` inside a `with`).
+3. This works quite well in a nested 'context' (ie. a `with Profiler()` inside a `with Profiler()`), which is kind of cool.
 
 # Summary
 
