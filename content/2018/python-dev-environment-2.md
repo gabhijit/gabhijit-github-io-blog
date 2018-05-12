@@ -51,12 +51,72 @@ Here are some of the guidelines that I follow -
 
 3. Enable ALL Warnings, Errors and Fatal messages. A note: I always disable `fixme` warnings because I almost always have a few `FIXME`s in the code and they shouldn't unnecessarily lower the score. Another nagging warning is a `global-statement`, which I often don't disable in the `pylintrc` file, but sometimes may disable it in a given file using the editor directive. As something like global statements should best be left to the decision of code reviewer upon whether (s)he is fine with it or not.
 
-Once this is setup, it's probably a better idea to track the `pylintrc` file in the VCS, so subsequent invocations can use this file and there will be consistency in the way the code is analyzed.
+Once this is setup, it's probably a better idea to track the `pylintrc` file in the VCS, so subsequent invocations can use this file and there will be consistency in the way the code is analyzed. We'll look at an example of integrating this with your git based repository to ensure that the code gets checked by `pylint` every time you make a commit.
 
 ## A bit more about `pylint` Score
 
+`pylint` provides a score to your Python code out of 10. This code is based on a formula from the `pylintrc` file that can be customized if you want to. The default formula looks something like -
+
+```
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+```
+However, coming from `gcc` `-Werr` world, it's better to treat warnings just as badly as errors as warnings are often a size of accumulating technical debt in your codebase. So I often use a slightly modified evaluation formula that looks like -
+
+```
+evaluation=10.0 - ((float(5 * error + 5 * warning + refactor + convention) / statement) * 10)
+```
+A side note - There might be certain warnings which we might want to disable (e.g. `fixme` warnings) as discussed above, but there are certain warnings worth paying attention to. For instance there is a warning about logging 'logging-not-lazy' - in fact a little curiosity about this specific warning after running `pylint` on one of my python projects, lead me to actually look at `pylint` little more seriously than I would have. A side side note - There are a number of things about `logging` module that should really qualify a separate blog post, but more about it some other time.
+
+When we look at integrating with the `git commit`, we'll also look at how warnings can be treated as errors.
+
+## Usage Summary `pylint`
+
+1. Start with default configuration and save your `pylintrc` file in the VCS.
+
+2. Enable / disaable messages as per your particular workflow. Recommended: do not disable errors and treat almost all warnings as errors.
+
+3. If required customize evaluation to treat warnings as errors.
+
+4. Recommended is to integrate `pylint` checking with commit to the VCS repository.
+
 # Integrating `pylint` with git
 
-# 'pylint' Workflow Summary
+`git` provides hooks in the workflow, which can be used for various purposes. We will make use of a `git pre-commit hook` to make sure that we run `pylint` on all modified Python files in a project. A hook can run any program and if returns an error (non-zero exit status), the particular action doesn't proceed. So we want to run `pylint` and allow it to go ahead if there are zero warnings and zero errors and zero fatal messages. `pylint` return status is a bit weird, it basically returns a value where a particular bit is set if there were messages of that type. A sample shell script below can be used to achieve this.
 
-# Few More Points
+```bash
+#!/bin/bash
+
+PYLINT=venv/bin/pylint
+
+TOPLEVEL=`git rev-parse --show-toplevel`
+
+PYLINTRC=${TOPLEVEL}/.pylintrc
+
+PYLINT_OPTS="--rcfile=${PYLINTRC}"
+
+PYTHON_FILES=$(git diff --name-only --cached --diff-filter=ACM | grep '\.py$')
+echo "Running Pylint ...."
+echo "${PYLINT} ${PYLINT_OPTS} ${PYTHON_FILES}"
+${PYLINT} ${PYLINT_OPTS} ${PYTHON_FILES}
+RESULT=$?
+
+ALL_RESULT=$(( $((${RESULT}&4)) || $((${RESULT}&2)) || $((${RESULT}&1)) ))
+if [[ ${ALL_RESULT} -eq 0 ]]; then
+    echo "pylint: Looks Okay."
+    exit 0
+else
+    echo "pylint: Errors or Warning. Fix them first..."
+    exit -1
+fi
+
+```
+
+Note: in the example script above, we check for only modified Python files, since we do not want to run `pylint` if we only modify `README.md` file. Since, it's a better idea to track this file in the VCS as well.
+
+## Batteries included in `pylint`
+
+We have only scratched the surface of `pylint` usage, `pylint` invocation can be customized in many ways. For instance there are a number of configuration options that can be tweaked to a particular environment. Another important feature of `pylint` that we have not looked at so far is `pylint` plugins. Plugins provide a mechanism to extend the kind of checking `pylint` can perform on your code. A very good example of `pylint` plugins is [pyling django plugin](). It is highly recommended to use this plugin if you are working on Django project.
+
+# Summary
+
+So far we looked at `pylint` as a code linting tool and have seen it's usage and integration with `git`. For ensuring and enforcing code quality of Python codebase, this is an excellent tool.
