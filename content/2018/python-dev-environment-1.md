@@ -1,4 +1,4 @@
-Title: Python Project Workflows - Part 2
+Title: Python Project Workflows - Part 2 (Pipenv)
 Date: 2018-05-14
 Category: Python
 Tags: pylint, pip, pipenv, virtualenv
