@@ -1,23 +1,23 @@
 Title: Python Project Workflows - Part 2
-Date: 2018-05-06
+Date: 2018-05-14
 Category: Python
 Tags: pylint, pip, pipenv, virtualenv
 Slug: python-dev-environment-2
 Author: Abhijit Gadgil
-[//] # FIXME : Need to fix the link to draft
-Summary: In the [first post](/drafts/python-dev-environment.html), we looked at what are typical issues in setting up Python project workflows and took an overview of the tools of the trade. In this post, we are going to be looking closely at `pipenv` a tool for managing Python project dependencies. In particular we are looking at how `pipenv` will help us solve the problems of reproducible builds and managing dev and production environments properly as described in the post mentioned above.
+Status: Published
+Summary: In the [first post](/python-dev-environment.html), we looked at what are typical issues in setting up Python project workflows and took an overview of the tools of the trade. In this post, we are going to be looking closely at `pipenv` a tool for managing Python project dependencies. In particular we are looking at how `pipenv` will help us solve the problems of reproducible builds and managing dev and production environments properly.
 
 # Intended Audience
 
-Some background working in Python would be certainly useful. This document tries to provide an overview of the role of `requirements.txt` and how it is used along with `pip` and `setuptools`, but is not a tutorial on `requirements.txt`.
+If you have not read [first part](/python-dev-environment.html) of this series, it might be a good idea to start there to understand the issues that we are trying to address here.
 
-To better understand some of the issues we are addressing in this document, having read first part of this tutorial would be quite useful.
+Some background working in Python would be certainly useful. This document tries to provide an overview of the role of `requirements.txt` and how it is used along with `pip` and `setuptools`, but is not a tutorial on `requirements.txt`.
 
 # Introduction
 
 As seen in Part 1 of the series of blog, `requirements.txt` file can be used to track external dependencies of our project. Often, one may not necessarily have a separate `requirements.txt` file, but the dependencies can be tracked directly in the `setup.py` if one is using `setuptools` for building, installing and publishing the project. The way this works is `setup` function in `setuptools` takes an argument called `install_requires` and typically this list is generated from the `requirements.txt` file above, with something very simple like `install_requires=open('requirements.txt', 'r').readlines()`. This will make sure whenever we are trying to `install` the project, these dependencies (and their dependencies) are installed as well.
 
-One of the challenges with `requirements.txt`, when using [semantic versioning](https://semver.org/) (which is always recommended) is whether to specify exact versions of dependencies (using eg. say `requests==2.18.4`) or using the versions that are compatible with our Project. While it may be desirable to use latest compatible versions, it might resulting in different builds at different times of the same project (commit as well) to result in using different versions of dependencies and hence the builds are no longer reproducible, so it probably is a good idea to use fixed versions of dependencies and whenever the dependencies are updated, they undergo a proper testing and then a newer version of project can use newer version of dependencies.
+One of the challenges with `requirements.txt`, when using [semantic versioning](https://semver.org/) (which is always recommended) is whether to specify exact versions of dependencies (using eg. say `requests==2.18.4`) or using the versions that are compatible with our Project. While it may be desirable to use latest compatible versions, it might result in different builds (where the build checksum does not match) at different times of the same project (even for the same commit) using different versions of dependencies and hence the builds are no longer deterministic or reproducible, so it probably is a good idea to use fixed versions of dependencies and whenever the dependencies are updated, they undergo a proper testing and then a newer version of project can use newer version of dependencies.
 
 As we have seen `pip freeze` can be used to generate exact version of dependencies installed. However this is still not most ideal, the reason being `pip freeze` will collect all dependencies (which is good), but won't tell us which dependencies were installed to satisfy which dependencies or in other words, it doesn't show dependency graphs and how they are resolved. This means even 'dev' dependencies are collected by `pip freeze`, which is something we don't want.
 
@@ -25,13 +25,13 @@ We might require separate environment for development and separate environment f
 
 So how do we solve this issue? In comes `pipenv`. Next we'll look at some sample use of `pipenv` and how the problem described above can be addressed and some things to keep in mind.
 
-# 'pipenv' A Quick Overview
+# A Quick Overview of 'pipenv'
 
 [`pipenv`](https://github.com/pypa/pipenv) is a recommended tool for Python packaging and it tries to bring the features available for packaging in things like `npm`, `cargo`, `bundler` etc. A project's dependencies are provided in a file called `Pipfile`. `pipenv` then along with `Pipfile` and companion `Pipfile.lock` provides the necessary tooling. A more detailed list of `pipenv` [features is available here](https://github.com/pypa/pipenv#-features). Also, with `pipenv`, there is no need to manage `virtualenv` for the project. It is managed automatically by the `pipenv`. It's highly recommended to read more about it's documentation above. Just like `pip`, it's possible to provide dependencies from a VCS or your local file-system. Also, it's quite easy to manage the development environment as most of the `pipenv` commands support an option called `--dev`, that is extremely useful. Next we'd take a look at a simple `pipenv` based workflow that I usually follow.
 
-# `pipenv` A simple workflow.
+# A Simple workflow for 'pipenv'
 
-This section explains how `pipenv` manages your environment, for a quick usable workflow go directly to [summary section below]()
+This section explains how `pipenv` manages your environment, for a quick usable workflow go directly to [summary section below](#summary)
 
 Usually, your project may already have a `requirements.txt`, so the first step in getting started with `pipenv` is generating a `Pipfile`. This can be done as follows
 
@@ -220,13 +220,13 @@ You might see a warning as below, but it can be safely ignored -
 
 So what we do now is - used the output generated above to populate `requirements.txt` and `dev-requirements.txt` respectively.
 
-# 'pipenv' Workflow Summary
+# <a name="summary"></a> Workflow Summary for Pipenv
 
 All of this can be summarized as follows (assuming you are starting for a brand new-project) -
 
 1. Start with `pipenv install`
 
-2. Add necessary project requirements. Read [here]() why it is better to give a "*" as a dependency than a fixed version.
+2. Add necessary project requirements.
 
 3. `pipenv update`
 
