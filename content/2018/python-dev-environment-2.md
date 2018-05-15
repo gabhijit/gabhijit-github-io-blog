@@ -1,19 +1,18 @@
 Title: Python Project Workflows - Part 3
-Date: 2018-05-06
+Date: 2018-05-15
 Category: Python
 Tags: pylint, Python
 Slug: python-dev-environment-3
 Author: Abhijit Gadgil
-[//] # FIXME : Need to fix the link to draft
-Summary: In the [first part]() we looked at a few challenges involved when developing a Python project in a collaborative environment. In the [second part]() we looked at how `Pipenv` addresses some of those issues. In this part of the series we are going to take a closer look at how one can use code linting tools. Specifically we are going to be looking in details at using `pylint`.
+Summary: In the [first part](/python-dev-environment.html) we looked at a few challenges involved when developing a Python project in a collaborative environment. In the [second part](/python-dev-environment-2.html) we looked at how `Pipenv` addresses some of those issues. In this part of the series we are going to take a closer look at how one can use code linting tools. Specifically we are going to be looking in details at using `pylint`.
 
 # Introduction
 
-Python being a dynamically typed and interpreted language, there is no such thing as 'compile time' and most of the errors (even related to syntax) show up only at the run-time and that's kind of not good,  which can and should be easily avoided. So it's very important to have your code checked by some linting tools before it goes into the repository. Further, often, it's a good practice that certain coding guidelines are followed by the development team, in fact it's even better if they can be enforced using tools, so there is some level of consistency in the way a project is developed. Early is better than late. [`pylint`](https://www.pylint.org/) is an excellent tool to achieve both of these objectives (and more). In the discussion that follows, we are going to take a closer look at how `pylint` can be integrated into the development workflow.
+Python being a dynamically typed and interpreted language, there is no such thing as 'compile time' and most of the errors (even related to syntax) show up only at the run-time and that's kind of not good,  which can and should be easily avoided. So it's very important to have your code checked by some linting tools before it goes into the repository. Further, often, it's a good practice that certain coding guidelines are followed by the development team, in fact it's even better if they can be enforced using tools, so there is some level of consistency in the way a project is developed. Early is better than late. [`pylint`](https://www.pylint.org/) is an excellent tool to achieve both of these objectives (and more). In the discussion that follows, we are going to take a closer look at how `pylint` can be integrated into your Python development workflow.
 
 # Python linting tools overview
 
-There are a number of syntax and error checker tools for Python and [this]() and [this]() discussion on SF compares them in great details, so won't repeat here. Choice of `pylint` was somewhat influenced by these discussions, but it was more like, used it, found it useful and just started using it.
+There are a number of syntax and error checker tools for Python and [this](https://stackoverflow.com/questions/1428872/pylint-pychecker-or-pyflakes) discussion on SF compares them in great details, so won't repeat here. Choice of `pylint` was somewhat influenced by these discussions, but it was more like, used it, found it useful and just started using it.
 
 # A simple `pylint` Workflow
 
@@ -21,7 +20,7 @@ It's easiest to get started with `pylint` by something as simple as -
 
 `pylint modulename.py` or `pylint packagename` and if one is running `pylint` for the first time, chances are the code will get rated at a very low value (don't feel terrible if it reports a number less than 5.0 out of 10.0). `pylint` categorizes issues it observes with the code into five categories -
 
-1. Convention : The code is not following the `pep8` convention and some more.
+1. Convention : The code is not following the [pep8](https://www.python.org/dev/peps/pep-0008/) convention and some more.
 
 2. Refactoring : Possible refactoring possible (identifying duplicate code etc.)
 
@@ -31,13 +30,13 @@ It's easiest to get started with `pylint` by something as simple as -
 
 5. Fatal: For some reasons, `pylint` reported a fatal error and couldn't continue.
 
-`pylint` being highly configurable uses a default configuration about the kind of messages it reports and kind of messages it ignores. A [detailed list of pylint messages]() is available here. What defaults `pylint` uses can be found out by running `pylint --generate-rcfile`. The details of configuration file can be read about in the [documentation](). Often though, it's probably a good idea to tweak the configuration file as we'll see in the next section. Based upon the number of lines analyzed and the total message count then `pylint` assigns a 'score' to the code. `pylint` also generates a detailed report for the errors and can track a bit of history (current score compared to previous score) of executions.
+`pylint` being highly configurable uses a default configuration about the kind of messages it reports and kind of messages it ignores. A [detailed list of pylint messages](http://pylint-messages.wikidot.com/all-messages) is available here. What defaults `pylint` uses can be found out by running `pylint --generate-rcfile`. The details of configuration file can be read about in the [documentation](http://pylint.pycqa.org/en/1.8/). Often though, it's probably a good idea to tweak the configuration file as we'll see in the next section. Based upon the number of lines analyzed and the total message count then `pylint` assigns a 'score' to the code. `pylint` also generates a detailed report for the errors and can track a bit of history (current score compared to previous score) of executions.
 
 # A detailed `pylint` Workflow
 
 One of the best ways to start using `pylint` is to generate our own `pylint` configuration file and then tweak it to our own needs. We'd go through a simple workflow about how to do it, but this is something that is best tailored for individual project.
 
-First start with a default `pylintrc` file generated through `pylint --generate-rcfile` and then tweak it to your own environment, preferences or coding standards.
+First start with a default `pylintrc` file generated through `pylint --generate-rcfile` and then tweak it to your own environment, preferences or coding standards. Instead of looking at all the possible tweaking options, we are mainly going to look in subsequent sections about options or messages that affect your 'score' and are likely to be potential cause of trouble in future if ignored.
 
 ## Enabling and Disabling Certain messages
 
@@ -47,7 +46,7 @@ Here are some of the guidelines that I follow -
 
 1. Start with enabling everything
 
-2. Disable certain types of Convention and Refactor messages (this is usually a matter of taste, so probably not a good idea to recommend which are recommended ones.).
+2. Disable certain types of Convention and Refactor messages (this is usually a matter of taste and is a function of individual project, so probably not a good idea to recommend which are recommended ones.).
 
 3. Enable ALL Warnings, Errors and Fatal messages. A note: I always disable `fixme` warnings because I almost always have a few `FIXME`s in the code and they shouldn't unnecessarily lower the score. Another nagging warning is a `global-statement`, which I often don't disable in the `pylintrc` file, but sometimes may disable it in a given file using the editor directive. As something like global statements should best be left to the decision of code reviewer upon whether (s)he is fine with it or not.
 
@@ -73,9 +72,9 @@ When we look at integrating with the `git commit`, we'll also look at how warnin
 
 1. Start with default configuration and save your `pylintrc` file in the VCS.
 
-2. Enable / disaable messages as per your particular workflow. Recommended: do not disable errors and treat almost all warnings as errors.
+2. Enable / disable messages as per your particular workflow. Recommended: do not disable errors and treat almost all warnings as errors.
 
-3. If required customize evaluation to treat warnings as errors.
+3. If required customize 'evaluation' to treat warnings as errors.
 
 4. Recommended is to integrate `pylint` checking with commit to the VCS repository.
 
@@ -115,8 +114,8 @@ Note: in the example script above, we check for only modified Python files, sinc
 
 ## Batteries included in `pylint`
 
-We have only scratched the surface of `pylint` usage, `pylint` invocation can be customized in many ways. For instance there are a number of configuration options that can be tweaked to a particular environment. Another important feature of `pylint` that we have not looked at so far is `pylint` plugins. Plugins provide a mechanism to extend the kind of checking `pylint` can perform on your code. A very good example of `pylint` plugins is [pyling django plugin](). It is highly recommended to use this plugin if you are working on Django project.
+We have only scratched the surface of `pylint` usage, `pylint` invocation can be customized in many ways. For instance there are a number of configuration options that can be tweaked to a particular environment. Another important feature of `pylint` that we have not looked at so far is `pylint` plugins. Plugins provide a mechanism to extend the kind of checking `pylint` can perform on your code. A very good example of `pylint` plugins is [pyling django plugin](https://pypi.org/project/pylint-django/). It is highly recommended to use this plugin if you are working on Django project.
 
 # Summary
 
-So far we looked at `pylint` as a code linting tool and have seen it's usage and integration with `git`. For ensuring and enforcing code quality of Python codebase, this is an excellent tool.
+So far we looked at `pylint` as a code linting tool and have seen it's usage and integration with `git`. For ensuring and enforcing code quality of Python codebase, this is an excellent tool. Note however that we have only scratched the surface as far as `pylint` usage is concerned.
