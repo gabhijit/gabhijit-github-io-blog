@@ -1,9 +1,10 @@
-Title: Python Project Workflows - Part 3
-Date: 2018-05-15
+Title: Python Project Workflows - Part 3 (pylint)
+Date: 2018-05-16
 Category: Python
 Tags: pylint, Python
-Slug: python-dev-environment-3
+Slug: python-project-workflows-3
 Author: Abhijit Gadgil
+Status: Published
 Summary: In the [first part](/python-dev-environment.html) we looked at a few challenges involved when developing a Python project in a collaborative environment. In the [second part](/python-dev-environment-2.html) we looked at how `Pipenv` addresses some of those issues. In this part of the series we are going to take a closer look at how one can use code linting tools. Specifically we are going to be looking in details at using `pylint`.
 
 # Introduction
@@ -114,8 +115,8 @@ Note: in the example script above, we check for only modified Python files, sinc
 
 ## Batteries included in `pylint`
 
-We have only scratched the surface of `pylint` usage, `pylint` invocation can be customized in many ways. For instance there are a number of configuration options that can be tweaked to a particular environment. Another important feature of `pylint` that we have not looked at so far is `pylint` plugins. Plugins provide a mechanism to extend the kind of checking `pylint` can perform on your code. A very good example of `pylint` plugins is [pyling django plugin](https://pypi.org/project/pylint-django/). It is highly recommended to use this plugin if you are working on Django project.
+We have only scratched the surface of `pylint` usage, `pylint` invocation can be customized in many ways. For instance there are a number of configuration options that can be tweaked to a particular environment. Another important feature of `pylint` that we have not looked at so far is `pylint` plugins. Plugins provide a mechanism to extend the kind of checking `pylint` can perform on your code. A very good example of `pylint` plugins is [pylint django plugin](https://pypi.org/project/pylint-django/). It is highly recommended to use this plugin if you are working on Django project.
 
 # Summary
 
-So far we looked at `pylint` as a code linting tool and have seen it's usage and integration with `git`. For ensuring and enforcing code quality of Python codebase, this is an excellent tool. Note however that we have only scratched the surface as far as `pylint` usage is concerned.
+So far we looked at `pylint` as a code linting tool and have seen it's usage and integration with `git`. For ensuring and enforcing code quality of Python codebase, this is an excellent tool. What we have discussed so far only covers a broad overview and certain ways of integrating `pylint` in your development workflows. This should serve as a good starting point for a deeper dive into `pylint`.

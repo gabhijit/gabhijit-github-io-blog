@@ -2,7 +2,7 @@ Title: Python Project Workflows - Part 2 (Pipenv)
 Date: 2018-05-14
 Category: Python
 Tags: pylint, pip, pipenv, virtualenv
-Slug: python-dev-environment-2
+Slug: python-project-workflows-2
 Author: Abhijit Gadgil
 Status: Published
 Summary: In the [first post](/python-dev-environment.html), we looked at what are typical issues in setting up Python project workflows and took an overview of the tools of the trade. In this post, we are going to be looking closely at `pipenv` a tool for managing Python project dependencies. In particular we are looking at how `pipenv` will help us solve the problems of reproducible builds and managing dev and production environments properly.
@@ -241,11 +241,11 @@ All of this can be summarized as follows (assuming you are starting for a brand 
 
 # Few More Points
 
-1. VCS repositories - `pipenv` allows to use dependencies from the VCS directly (something that `pip` supports as well.) The exact syntax for this is as follows - In the `Pipfile` mention the dependency as follows
+* VCS repositories - `pipenv` allows to use dependencies from the VCS directly (something that `pip` supports as well.) The exact syntax for this is as follows - In the `Pipfile` mention the dependency as follows
 ```
 tickerplot = { git = "https://github.com/gabhijit/tickerplot.git", ref="v0.0.4", editable="True" }
 ```
 Note: here it is required to give `editable=True` or else `pipenv lock -r` won't list the subsequent dependencies of the dependencies taken from the `git` repository above.
 
-2. Starting with existing `requirements.txt` file - If there's an already exisiting `requirements.txt` file, `Pipfile` will pick up the exact versions from the `requirements.txt` and you won't be able to `upgrade` to newer versions without fixing this first.
+* Starting with existing `requirements.txt` file - If there's an already exisiting `requirements.txt` file, `Pipfile` will pick up the exact versions from the `requirements.txt` and you won't be able to `upgrade` to newer versions without fixing this first.
 

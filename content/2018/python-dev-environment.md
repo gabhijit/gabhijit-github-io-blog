@@ -2,7 +2,7 @@ Title: Python Project Workflows - Part 1
 Date: 2018-05-08
 Category: Python
 Tags: pylint, pip, pipenv, virtualenv, Python
-Slug: python-dev-environment
+Slug: python-project-workflows-1
 Author: Abhijit Gadgil
 Status: Published
 Summary: In a Python based development, tools like `pylint`, `pipenv` and `virtualenv` become important pieces of your development workflow. In the first part of the series of blog posts, we look at overview of the issues that become important as the scope of the project and size of the team working on project increases. In later posts in these series, we would try to address these issues one by one, we look at starting a project, identifying and resolving dependencies 'correctly', why reproducible builds matter, how to separate development and production environment and eventually how to containerize the application.
