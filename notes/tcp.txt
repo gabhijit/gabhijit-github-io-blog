@@ -2,12 +2,28 @@ What is a three way handshake? Why a three way handshake is required?
 
 In fact something like SCTP has a 4 way handshake - So what 'SYN Cookies' does is actually done by the 4 way handshake in SCTP, where it doesn't store 'any state' for the client connection unless client sends a 'Cookie-ACK'
 
-
 Can you map this to socket calls?
 
 socket call - 'connect' -> SYN is sent, socket call 'listen' -> Nothing happens as you are just expressing 'interest' in receiving connections and there is no 'other side' yet to ack. So when 'accept' is blocking, you are waiting for a 'SYN' to be received from the client, when that is returned, 'accept' would immediately return. What happens when you 'listen' but do not 'accept'? That is you never call a 'accept'? is 'SYN-ACK' sent? Logically, from the protocol point of view, it should be and the protocol stack hopes that 'aceept' is sometime called. What happens if 'accept' is never called? The server's protocol stack should keep accepting data up to it's advertised window after that it should discard the packets and should not buffer them.
 
 So when does the client's 'connect' return? Logically it should return upon receiving the 'SYN+ACK' and sending it's own 'ACK' as the client has no way of knowing whether a poorly implemented server never 'accept'ed.
+
+Let's try this in a simple TCP client server
+
+So I wrote this 'rogue' tcp server that never 'accepts' and a tcp client that keeps sending data regardless - Some rather interesting observations -
+
+1. Advertised window size is 43690 from both sides (don't know where it is coming from, but likely it is coming from some sysctl - TODO: figure that out)
+2. In the subsequent 'Ack's the server starts with a Window size of 1365 (segmentish) and increases it up to 3637 and then it kind of stays there for a while and then steadily stops dropping (almost by about 9 bytes every segment received) and eventually reaches zero. So far so good -
+3. Oddly enough, the 'write's at the client still continue to succeed, and this keeps happening till almost 2328 total segments are sent, so this is '2328' segments always (or it was a couple of times I tried) - This corresponds to almost 3.5 MB of unacknowledged data. Tried it with a segment size of 1200 as well just to make sure there was not something magical about 2328 and it turns out that unacknowledged data is about the same size - 3.5 MB, this times number of segments is 2647. Need to figure out 'where this data is sitting?' Clearly this data is sitting somewhere at the client as we didn't see any data on tcpdump.
+4. We observed though that the `persist timer` has kicked in and it's back-off as well, but this keeps happening and TCP kind of never gives up.
+
+So things to figure out
+
+- What's magical about 3637?
+- Beyond 43960? Why is data allowed to be sent?
+- Where is the whole 3.5MB is sitting?
+- Will this behavior change? If we 'accept' but don't 'read'? I doubt
+
 
 What is TCP flow control?
 
