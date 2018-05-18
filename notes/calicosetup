@@ -1,0 +1,50 @@
+1. First installed qemu-system qemu-kvm
+
+`apt-get install qemu-system qemu-kvm`
+
+2. Installed etcd - Run as a single node
+3. Installed calicoctl - 
+
+For etcd
+https://github.com/coreos/etcd/releases
+
+For calicoctl
+
+https://docs.projectcalico.org/v3.0/usage/calicoctl/install
+
+
+3. Created /usr/local/calico/bin and saved following executables there
+- calicoctl
+- etcd
+- etcdctl
+
+Added path to /etc/profile.d/ to have these available always
+
+
+4. Run etcd as 'root user' - FIXME 
+`nohup etcd &`
+
+5. Installed docker-ce 
+
+https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-16-04
+
+
+6. Created calico user - Added to docker group
+usermod -aG docker calico
+
+7. Added calico/node service to systemd 
+
+Created - /etc/calico/calico.env file - 
+
+https://docs.projectcalico.org/v3.0/usage/configuration/as-service
+
+Created a systemd.service file and enabled service
+
+systemctl enable calico-node.service
+
+
+
+
+
+
+

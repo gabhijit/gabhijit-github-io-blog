@@ -1,0 +1,32 @@
+What is a three way handshake? Why a three way handshake is required?
+
+In fact something like SCTP has a 4 way handshake - So what 'SYN Cookies' does is actually done by the 4 way handshake in SCTP, where it doesn't store 'any state' for the client connection unless client sends a 'Cookie-ACK'
+
+
+Can you map this to socket calls?
+
+socket call - 'connect' -> SYN is sent, socket call 'listen' -> Nothing happens as you are just expressing 'interest' in receiving connections and there is no 'other side' yet to ack. So when 'accept' is blocking, you are waiting for a 'SYN' to be received from the client, when that is returned, 'accept' would immediately return. What happens when you 'listen' but do not 'accept'? That is you never call a 'accept'? is 'SYN-ACK' sent? Logically, from the protocol point of view, it should be and the protocol stack hopes that 'aceept' is sometime called. What happens if 'accept' is never called? The server's protocol stack should keep accepting data up to it's advertised window after that it should discard the packets and should not buffer them.
+
+So when does the client's 'connect' return? Logically it should return upon receiving the 'SYN+ACK' and sending it's own 'ACK' as the client has no way of knowing whether a poorly implemented server never 'accept'ed.
+
+What is TCP flow control?
+
+What is TCP Congestion Control?
+
+When a Server communicates with a client? Which all buffers come into play?
+
+What different type of timers are there and when they come into play? Remember ALL?
+
+- as a client
+- as a server
+
+what is silly windrow syndrome and naggle's algorithm? What is TCP_NODELAY? Option?
+
+Major differences between TCP congestion control algorithms?
+
+What is TCP User Timeout Option?
+
+What are TCP syn cookies?
+
+SYN cookies try to defend against SYN flood attack - how? Upon receiving a SYN, a server is going to create an entry in SYN Queue (should it not be more like a Hash table?), as upon reception of ACK you are likely going to 'lookup' into this. What SYN-Cookies do is - create an Initial Sequence Number (ISN) that is generated as a hash function of - a) a slow timer 5 bits (so mod 32) b) Server MSS values (3 bits - so one of 8) and a 24 bit cryptographic hash function that is 'impossible to guess'. So when TCP Syn-cookkies are enabled, the entry for this connection (created upon receiving first SYN packet is discarded - so no resources are hogged. Why? Because it can be re-created later by taking the subsequent ACK's sequence number subtracting one from it and making sure the client is same as the one who sent the first one and then 're-create the entry' upon legitimate connection establishment. What are potential problems with this? 1) Since initial entry is discarded, chances are TCP options get discarded. Also what happens when a legitimate connections 'ACK' get's dropped? Since there is no server side state, if the Server Application is expected to send first 'banner' as is the case with certain protocols like `SSH` and `SMTP`, client may potentially come to know about this only after a 'long TCP timeout'. Since there was no data to be sent from client. However quickly trying with ssh localhost, it appears client indeed sends something to Server first.
+

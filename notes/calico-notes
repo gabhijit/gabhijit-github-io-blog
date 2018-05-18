@@ -1,0 +1,38 @@
+Notes:
+
+Support a VM migration scenario
+
+AWS:
+
+1. Created two instances - on both the instances, running calico/node - it's a docker image that runs -
+   - Felix Agent
+   - Bird BGP
+2. Also we have to run etcd that's the key value store calico uses to store it's metadata.
+3. AWS allows an option to 'disable host address check' in it's outgoing packets. This helps in creating a flat network
+4. This is very similar to how kubernetes would do it - except we are doing everything by hand - kubernetes would use -daemonsets
+
+5. Scenario
+   - Setup calico/node to run on two hosts - say Host1 and Host2
+   - Run etcd  on Host1 ( We are not using replication for now - if we are using replication we've to use Odd number of nodes, as etcd runs Raft consensus protocol - Requires odd number of nodes)
+   - Add a tap interface (say tap0) (Step performed by VM orchestrator)
+   - Assign IP address to it - say 192.168.1.1 (Step performed by VM Orchestrator)
+   - Add a host route (/32) to it in the kernel routing table. (Felix agent)
+   - This route is picked by Bird BGP and distributed to other BGP agent with next hop set to eth0 IP Address of the Host1
+   - So when we ping from host2 to 192.168.1.1 - we have the packet that looks like - DMACHost1Eth0-SMACHost2Eth0-DIP(192.168.1.1)-SIP(10.142.0.1) - ping works
+
+
+GCP:
+
+In case of GCP it is little different than AWS -
+
+1. We can use calico as in setup above, but then the limitation is - we have to use IP in IP Overlay - Usually may result in scalability problems
+
+2. Other option is to use mechanism that GCP provides called Alias IP. Here are some caveats about it -
+   - Ideally we would want VM migration should happen without having to interface with Cloud Platform - (We achieved the above - though we didn't do actual VM migration - but it was done for it by Calico)
+   - GCP documented use-case for alias IP is to support more than one IP addresses for an interface - Typically if you are running VM/Containers on GCP inside the GCP instance.
+   - However all the routing is taken care of by GCP (and it's some internal magic) - eg. we do not see routes through 'gcloud compute routes list' so this is opaque to us
+   - We can make use of /32 alias-ip, but then migrating VM would mean 2 API calls - 1st to delete Alias IP on Host1 and then to add alias IP on Host2. This should happen automically
+     - Haven't tried this scenario with actual 'VM migration'
+
+
+
