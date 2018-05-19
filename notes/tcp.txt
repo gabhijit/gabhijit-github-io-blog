@@ -12,10 +12,11 @@ Let's try this in a simple TCP client server
 
 So I wrote this 'rogue' tcp server that never 'accepts' and a tcp client that keeps sending data regardless - Some rather interesting observations -
 
-1. Advertised window size is 43690 from both sides (don't know where it is coming from, but likely it is coming from some sysctl - TODO: figure that out)
-2. In the subsequent 'Ack's the server starts with a Window size of 1365 (segmentish) and increases it up to 3637 and then it kind of stays there for a while and then steadily stops dropping (almost by about 9 bytes every segment received) and eventually reaches zero. So far so good -
+1. Advertised window size is 43690 from both sides (don't know where it is coming from, but likely it is coming from some sysctl - TODO: figure that out). Is it including scaling or without scaling?
+2. In the subsequent 'Ack's the server starts with a Window size of 1365 (segmentish) and increases it up to 3637 and then it kind of stays there for a while and then steadily stops dropping (almost by about 9 every segment received) and eventually reaches zero. Actually, note though that the 'real window' is this number * 128 (as advertised window scaling during connection setup) So far so good -
 3. Oddly enough, the 'write's at the client still continue to succeed, and this keeps happening till almost 2328 total segments are sent, so this is '2328' segments always (or it was a couple of times I tried) - This corresponds to almost 3.5 MB of unacknowledged data. Tried it with a segment size of 1200 as well just to make sure there was not something magical about 2328 and it turns out that unacknowledged data is about the same size - 3.5 MB, this times number of segments is 2647. Need to figure out 'where this data is sitting?' Clearly this data is sitting somewhere at the client as we didn't see any data on tcpdump.
 4. We observed though that the `persist timer` has kicked in and it's back-off as well, but this keeps happening and TCP kind of never gives up.
+5. When tried with different net namespaces, the writes in 3 stopped right after the window reached '0', which is the expected behavior. So TCP does something different on localhost.
 
 So things to figure out
 
@@ -36,7 +37,9 @@ What different type of timers are there and when they come into play? Remember A
 - as a client
 - as a server
 
-what is silly windrow syndrome and naggle's algorithm? What is TCP_NODELAY? Option?
+what is silly windrow syndrome and naggle's algorithm? What is TCP_NODELAY Option?
+
+Idea behind Nagle's algorithm is as follows - typically in interactive applications (like say Telnet), it's quite suboptimal to send short TCP packets as they arrive in the buffer based upon user input. So what Nagle's algorithm does is - if data available to be sent is less than MSS, instead of sending it immediately, wait for the unacknowledged out data to be acknowledged first and then send it. However this has funny effect with 'delayed ACKs' as 'delayed ACKs' + Nagle Algorithm would mean very high delays (typically delayed Ack timer values are - few 100s of miliseconds)
 
 Major differences between TCP congestion control algorithms?
 
@@ -46,3 +49,4 @@ What are TCP syn cookies?
 
 SYN cookies try to defend against SYN flood attack - how? Upon receiving a SYN, a server is going to create an entry in SYN Queue (should it not be more like a Hash table?), as upon reception of ACK you are likely going to 'lookup' into this. What SYN-Cookies do is - create an Initial Sequence Number (ISN) that is generated as a hash function of - a) a slow timer 5 bits (so mod 32) b) Server MSS values (3 bits - so one of 8) and a 24 bit cryptographic hash function that is 'impossible to guess'. So when TCP Syn-cookkies are enabled, the entry for this connection (created upon receiving first SYN packet is discarded - so no resources are hogged. Why? Because it can be re-created later by taking the subsequent ACK's sequence number subtracting one from it and making sure the client is same as the one who sent the first one and then 're-create the entry' upon legitimate connection establishment. What are potential problems with this? 1) Since initial entry is discarded, chances are TCP options get discarded. Also what happens when a legitimate connections 'ACK' get's dropped? Since there is no server side state, if the Server Application is expected to send first 'banner' as is the case with certain protocols like `SSH` and `SMTP`, client may potentially come to know about this only after a 'long TCP timeout'. Since there was no data to be sent from client. However quickly trying with ssh localhost, it appears client indeed sends something to Server first.
 
+What are Selective Acknowledgements? What are delayed Acknowledgements? Where each of them are used?

@@ -6,13 +6,14 @@ A simple TCP server that listens on a socket and wait's in a while loop. We want
 import socket
 import time
 
+BIND_ADDRESS = "0.0.0.0"
 
 if __name__ == '__main__':
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     try:
-        sock.bind(("localhost", 8080))
+        sock.bind(("0.0.0.0", 8080))
 
         x = sock.listen(100)
 
