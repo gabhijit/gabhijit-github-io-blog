@@ -35,10 +35,131 @@ So this prompted in taking a more closer look at the documentation and figure ou
 
 # A Bit More About These Warnings
 
+As we have seen in the previous section, it is important to pass parameters as arguments to logging function rather than using '%' substitution or using `string.format`. Let's take a look at this in little more detail by profiling the code. Let's run this through our [context profiler](). Here's the relevant code and corresponding details -
+
+```
+import logging
+import time
+
+import profiler
+
+iterations = 1000000
+l = logging.getLogger(__name__)
+l.addHandler(logging.NullHandler())
+
+l.setLevel(logging.INFO)
+
+class Foo(object):
+    def __str__(self):
+        return "%s" % self.__class__
+
+with profiler.Profiler(enabled=True, contextstr="non lazy logging") as p:
+    for i in range(iterations):
+        l.debug("Hello There. %s" % Foo())
+
+p.print_profile_data()
+
+with profiler.Profiler(enabled=True, contextstr="lazy logging") as p:
+    for i in range(iterations):
+        l.debug("Hello There. %s", Foo())
+p.print_profile_data()
+```
+
+And here is the output of running the above code
+
+```
+profile: non lazy logging: enter
+         4000003 function calls in 1.058 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  1000000    0.231    0.000    0.655    0.000 /usr/lib/python2.7/logging/__init__.py:1145(debug)
+  1000000    0.272    0.000    0.424    0.000 /usr/lib/python2.7/logging/__init__.py:1360(isEnabledFor)
+  1000000    0.385    0.000    0.385    0.000 lazy_logging.py:13(__str__)  <-------------- Check this line
+  1000000    0.152    0.000    0.152    0.000 /usr/lib/python2.7/logging/__init__.py:1346(getEffectiveLevel)
+        1    0.018    0.018    0.018    0.018 {range}
+        1    0.000    0.000    0.000    0.000 /home/gabhijit/backup/personal-code/gabhijit-github-io-blog/sources/misc/python/logging/profiler.py:29(__exit__)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
+profile: non lazy logging: exit
+
+profile: lazy logging: enter
+         3000003 function calls in 0.591 seconds
+
+   Ordered by: cumulative time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+  1000000    0.195    0.000    0.580    0.000 /usr/lib/python2.7/logging/__init__.py:1145(debug)
+  1000000    0.245    0.000    0.385    0.000 /usr/lib/python2.7/logging/__init__.py:1360(isEnabledFor)
+  1000000    0.140    0.000    0.140    0.000 /usr/lib/python2.7/logging/__init__.py:1346(getEffectiveLevel)
+        1    0.010    0.010    0.010    0.010 {range}
+        1    0.000    0.000    0.000    0.000 /home/gabhijit/backup/personal-code/gabhijit-github-io-blog/sources/misc/python/logging/profiler.py:29(__exit__)
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+
+profile: lazy logging: exit
+```
+So our `__str__` for the class Foo was called even when the `logging.debug`  is not enabled. This might look like a convoluted example, but this proves an important point, especially when we are logging in critical path, extra cycles are spent in evaluating the string even when the relevant level is not enabled. When the parameters to be evaluated are themselves more expensive this could be an un-necessary penalty, so this should be avoided.
+
+Let's look at the logging architecture in little more details through use of some examples and what exactly is handling under the hood.
 
 # Logging Architecture
 
-Loggers, Handlers, Formatters and Hierarchy
+The complete logger flow is described below, taken from the excellent [logging howto]()
+
+
+
+We quickly go through each of the main classes, to provide a quick overview. Reading in more details about the HOWTO pointed above is highly recommended for further details.
+
+## `Logger` Class
+
+From the HOWTO above -
+
+> Logger objects have a threefold job. First, they expose several methods to application code so that applications can log messages at runtime. Second, logger objects determine which log messages to act upon based upon severity (the default filtering facility) or filter objects. Third, logger objects pass along relevant log messages to all interested log handlers.
+
+So basically, Logger classes are main entry point into the logging system. A more simple description of `Logger` class can be, they create `LogRecord` objects depending upon current configuration and handle them. The main function that does this looks like following (taken from `/usr/lib/python-2.7/logging/__init__.py`)
+
+```
+    def _log(self, level, msg, args, exc_info=None, extra=None):
+        """
+        Low-level logging routine which creates a LogRecord and then calls
+        all the handlers of this logger to handle the record.
+        """
+        if _srcfile:
+            #IronPython doesn't track Python frames, so findCaller raises an
+            #exception on some versions of IronPython. We trap it here so that
+            #IronPython can use logging.
+            try:
+                fn, lno, func = self.findCaller()
+            except ValueError:
+                fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        else:
+            fn, lno, func = "(unknown file)", 0, "(unknown function)"
+        if exc_info:
+            if not isinstance(exc_info, tuple):
+                exc_info = sys.exc_info()
+        record = self.makeRecord(self.name, level, fn, lno, msg, args, exc_info, func, extra)
+        self.handle(record)
+
+    def handle(self, record):
+        """
+        Call the handlers for the specified record.
+
+        This method is used for unpickled records received from a socket, as
+        well as those created locally. Logger-level filtering is applied.
+        """
+        if (not self.disabled) and self.filter(record):
+            self.callHandlers(record)
+
+```
+
+A couple of points to note here - `_log` function will be called looking at the current logging `LEVEL` of the logger and the handlers are called only if this is logger is `enabled` and any of the 'filters' associated with this logger allow the record to be passed. Question - why do all the work - when the logger is disabled?
+
+## `Handler` Class
+
+This class actually 'handles' the LogRecords emitted. Typically by calling the 'Formatter' for the LogRecord and then `emit`ing the record. A word about `emit` here is important - The Handler's handle method calls `emit` holding the Handler's lock, so it's important to pay attention to `emit` function isn't a blocking one. Some of the implementation of handlers actually have an `emit` function that is blocking.
 
 # Some Important Details
 
