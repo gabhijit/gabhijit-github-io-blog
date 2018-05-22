@@ -155,13 +155,21 @@ So basically, Logger classes are main entry point into the logging system. A mor
 
 ```
 
-A couple of points to note here - `_log` function will be called looking at the current logging `LEVEL` of the logger and the handlers are called only if this is logger is `enabled` and any of the 'filters' associated with this logger allow the record to be passed. Question - why do all the work - when the logger is disabled?
+A couple of points to note here - `_log` function will be called looking at the current logging `LEVEL` of the logger and the handlers are called only if this is logger is `enabled` and any of the 'filters' associated with this logger allow the record to be passed. [Question - why do all the work - when the logger is disabled?](https://stackoverflow.com/questions/50453121/logger-disabled-check-much-later-in-python-logging-module-whats-the-rationale)
 
 ## `Handler` Class
 
-This class actually 'handles' the LogRecords emitted. Typically by calling the 'Formatter' for the LogRecord and then `emit`ing the record. A word about `emit` here is important - The Handler's handle method calls `emit` holding the Handler's lock, so it's important to pay attention to `emit` function isn't a blocking one. Some of the implementation of handlers actually have an `emit` function that is blocking.
+This class actually 'handles' the LogRecords emitted. Typically by calling the 'Formatter' for the LogRecord and then `emit`ing the record. A word about `emit` here is important - The Handler's handle method calls `emit` holding the Handler's lock (see below), so it's important to pay attention to `emit` and try it as far as possible that it is not a blocking one. Some of the implementation of handlers actually have an `emit` function that is blocking. Python 3.2 onwards there is a QueueHandler that implements a non-blocking `emit`. So it might be a good idea to consider using that.
 
-# Some Important Details
+## `Formatter` Class
+
+## `Filter Class
+
+## `LoggerAdapter` Class
+
+# What happens when you do `import logging`
+
+When you do `import logging`, there are a number of things that happen under the hood. For example a `RootLogger` instance is created when the `logging` module is imported. Actually all the loggers created in a Python process form a hierarchy with `RootLogger` being at the 'root' of the hierarchy.
 
 Speak about when you are doing logging for a library, what's the approach you should take
 
