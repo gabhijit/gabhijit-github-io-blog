@@ -167,12 +167,26 @@ This class actually 'handles' the LogRecords emitted. Typically by calling the '
 
 ## `LoggerAdapter` Class
 
-# What happens when you do `import logging`
+# Creating Loggers
+
+## What happens upon `import logging`
 
 When you do `import logging`, there are a number of things that happen under the hood. For example a `RootLogger` instance is created when the `logging` module is imported. Actually all the loggers created in a Python process form a hierarchy with `RootLogger` being at the 'root' of the hierarchy.
 
-Speak about when you are doing logging for a library, what's the approach you should take
+## Creating Logger for Package and Subpackage
 
+A Logger can be created by -
+
+```
+logger = logging.getLogger("something")
+```
+
+Usually it's a good idea to pass the `__name__` of the current module to the logger. This has an important benefits that loggers of a package are arranged in a hierarchy. Let's say you have a package structure that looks like `foo.bar.baz` then inside each of the `__init__.py` if the logger is created through `logging.getLogger(__name__)` then the logger corresponding to package `foo` will be parent of the logger corresponding to package `foo.bar` which in turn will be parent of `foo.bar.baz` logging. Some of the advantages of that are - when actually the log records are emitted one precisely knows which module/package the log came from and one doesn't have to worry about what name to assign to the logger. There's another detail here, each `Logger` has got a property called `propagate` (default is `True`). If this property is `True` then for a given logger whenever a `LogRecord` is to be handled handlers attached to that particular logger as well as those attached to the 'parent' are called as well, (Note: here handlers) regardless of the `level` of the parent logger(s). Thus what one can do is at a package level, create a handler and all the sub-packages and modules within that package would just use this handler and no separate handler is required to be created and assigned to logger. This serves as a convenience and helps when defining loggers for a library (see below for details about it).
+
+
+## Loggers for libraries
+
+All the discussion above for the package and sub-packages applies here as well, another thing to keep in mind when working on a library which will be potentially used by someone else, it's a good idea to leave the 'actual logging configuration' to the application that will be using this library, so what we should really do is - simply create loggers and don't attach any handlers, whatever handlers are required to be attached, will be done by the application code that will utilize the function of the library. To avoid an Exception related to 'no handlers attached', it's a good idea to attach a `NullHandler` to the logger created by the topmost package.
 # Some Real World Examples
 
 Speak about how logging configuration happens in Django what are the caveats.
