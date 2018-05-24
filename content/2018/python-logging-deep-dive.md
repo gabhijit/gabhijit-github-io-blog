@@ -159,11 +159,11 @@ A couple of points to note here - `_log` function will be called looking at the 
 
 ## `Handler` Class
 
-This class actually 'handles' the LogRecords emitted. Typically by calling the 'Formatter' for the LogRecord and then `emit`ing the record. A word about `emit` here is important - The Handler's handle method calls `emit` holding the Handler's lock (see below), so it's important to pay attention to `emit` and try it as far as possible that it is not a blocking one. Some of the implementation of handlers actually have an `emit` function that is blocking. Python 3.2 onwards there is a QueueHandler that implements a non-blocking `emit`. So it might be a good idea to consider using that.
+This class actually 'handles' the LogRecords emitted. Typically by calling the 'Formatter' for the LogRecord and then `emit`ing the record. A word about `emit` here is important - The Handler's handle method calls `emit` holding the Handler's lock (see below), so it's important to pay attention to `emit` and try it as far as possible that it is not a blocking one. Some of the implementation of handlers actually have an `emit` function that is blocking. Python 3.2 onwards there is a QueueHandler that implements a non-blocking `emit`. So it might be a good idea to consider using that especially if you are logging in a critical path.
 
 ## `Formatter` Class
 
-## `Filter Class
+## `Filter` Class
 
 ## `LoggerAdapter` Class
 
@@ -187,6 +187,7 @@ Usually it's a good idea to pass the `__name__` of the current module to the log
 ## Loggers for libraries
 
 All the discussion above for the package and sub-packages applies here as well, another thing to keep in mind when working on a library which will be potentially used by someone else, it's a good idea to leave the 'actual logging configuration' to the application that will be using this library, so what we should really do is - simply create loggers and don't attach any handlers, whatever handlers are required to be attached, will be done by the application code that will utilize the function of the library. To avoid an Exception related to 'no handlers attached', it's a good idea to attach a `NullHandler` to the logger created by the topmost package.
+
 # Some Real World Examples
 
 Speak about how logging configuration happens in Django what are the caveats.
