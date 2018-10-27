@@ -8,5 +8,7 @@ l.warning("hi from baz")
 
 
 def log():
+    print "before 3"
     # Following will be printed, if called after logger in application is setup with proper handler (say StreamHandler)
     l.warning("hi again from baz")
+    print "after 3"

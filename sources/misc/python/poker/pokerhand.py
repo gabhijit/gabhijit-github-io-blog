@@ -7,7 +7,7 @@ cardranks = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8,
 
 
 def deck():
-    d =  [''.join((suit, rank)) for rank in cardranks for suit in suits]
+    d =  [''.join((rank, suit)) for rank in cardranks for suit in suits]
     random.shuffle(d)
     return d
 
@@ -105,11 +105,17 @@ class PokerHand(object):
 
         return False
 
+    def __repr__(self):
+        return " ".join(["".join([str(x[0]), str(x[1])]) for x in self._cards]) + \
+                " Score: {}".format(self.score)
+
 if __name__ == '__main__':
     hand = 'AC 2S 3C 4H 5S'
     assert PokerHand.from_str(hand).straight() == True
     hand = '8C TS JC 9H 7S'
-    print  "Hand '{}': Is straight? ".format(hand),  PokerHand.from_str(hand).straight()
+    print  "Hand '{}': Is straight? ".format(hand), \
+            PokerHand.from_str(hand).straight()
     print "Hand {}': ordered".format(hand), PokerHand.from_str(hand).ordered
     hand = '8C 8S 8D 8H 7S'
-    print "Hand {}': Four of a kind".format(hand), PokerHand.from_str(hand).four_of_a_kind()
+    print "Hand {}': Four of a kind".format(hand), \
+            PokerHand.from_str(hand).four_of_a_kind()
