@@ -1,3 +1,11 @@
+# This is a working implementation of coroutine based echo server as
+# suggested in Pep 342
+
+# One major problem with this is 'run' method does a 'busy polling' and
+# That's generally bad.
+
+# FIXME: To make it into select or epoll to avoid 'busy polling'
+
 import collections
 import socket
 import types
@@ -23,8 +31,13 @@ class Trampoline:
         self.running = True
         try:
             while self.running and self.queue:
-               func = self.queue.popleft()
-               result = func()
+                try:
+                    func = self.queue.popleft()
+                    result = func()
+                except StopIteration:
+                    print "StopIteration"
+                except Exception as e:
+                    print e
             return result
         finally:
             self.running = False
@@ -72,7 +85,10 @@ class Trampoline:
         self.queue.append(resume)
         print self.queue
 
-#A simple echo server, and code to run it using a trampoline (presumes the existence of nonblocking_read, nonblocking_write, and other I/O coroutines, that e.g. raise ConnectionLost if the connection is closed):
+# A simple echo server, and code to run it using a trampoline
+# (presumes the existence of nonblocking_read, nonblocking_write,
+# and other I/O coroutines, that e.g. raise ConnectionLost if the
+# connection is closed):
 
 # coroutine function that echos data back on a connected
 # socket
