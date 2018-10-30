@@ -4,8 +4,6 @@
 # One major problem with this is 'run' method does a 'busy polling' and
 # That's generally bad.
 
-# FIXME: To make it into select or epoll to avoid 'busy polling'
-
 import collections
 import socket
 import types
@@ -134,6 +132,7 @@ def nonblocking_read(sock):
     try:
         data = sock.recv(1024)
 
+        print "data:", data
         if len(data) == 0:
             raise ConnectionLost("EOF")
 
