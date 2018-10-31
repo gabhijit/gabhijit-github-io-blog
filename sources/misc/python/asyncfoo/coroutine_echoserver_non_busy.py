@@ -39,13 +39,7 @@ def nonblocking_read(sock):
         # Following read is going to be non-blocking because we
         # come here from IO loop.
 
-        data = sock.recv(1024)
-
-        if len(data) == 0:
-            print "ConnectionLost"
-            raise ConnectionLost("EOF")
-
-        return data
+        return sock.recv(1024)
     except Exception as e:
         print e
 
@@ -80,18 +74,15 @@ def nonblocking_accept(sock):
 def echo_handler(sock):
     while True:
         try:
-            print "running handler"
-
             yield "recv", sock
             data = nonblocking_read(sock)
 
             if data:
                 yield "send", sock
                 written = nonblocking_write(sock, data)
+            else:
+                yield "done", sock
 
-        except ConnectionLost:
-            print "ConnectionLost"
-            return
         except Exception as e:
             print e
             #pass  # exit normally if connection lost
@@ -136,15 +127,21 @@ class Scheduler(object):
         if not self.epoll:
             RuntimeError("Nothing to wait for I/O on.")
 
-        if why in ('recv', 'send'):
+        if why in ('recv', 'send', 'done'):
             fd = sock.fileno()
             if why == 'recv':
                 print("registering for I/O read:", fd)
                 self.epoll.register(fd, select.EPOLLIN)
+                self.taskmap[fd] = task
             elif why == 'send':
                 print("registering for I/O write:", fd)
                 self.epoll.register(fd, select.EPOLLOUT)
-            self.taskmap[fd] = task
+                self.taskmap[fd] = task
+            elif why == 'done':
+                print("popping,", fd)
+                self.taskmap.pop(fd)
+
+            print self.taskmap
 
         elif why == 'task':
             self.schedule(task)
@@ -179,10 +176,14 @@ class Scheduler(object):
             while self.runqueue:
                 task = self.runqueue.popleft()
                 print("running task:", task.target.__name__)
-                result = task.run()
+                try:
+                    result = task.run()
+                except StopIteration:
+                    pass
                 if result:
                     if isinstance(result, Task):
                         self.schedule(result)
+                        self.schedule(task)
                     else:
                         why, what = result
                         # So we have something that is waiting for I/O now
