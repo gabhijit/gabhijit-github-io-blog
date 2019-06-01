@@ -6,9 +6,10 @@ cardranks = {'2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8,
         '9': 9, 'T': 10, 'J':11, 'Q':12, 'K': 13, 'A': 14}
 
 
-def deck():
-    d =  [''.join((rank, suit)) for rank in cardranks for suit in suits]
-    random.shuffle(d)
+def deck(shuffled=False):
+    d =  [''.join((rank, suit)) for suit in suits for rank in cardranks]
+    if shuffled:
+        random.shuffle(d)
     return d
 
 class PokerHand(object):
@@ -113,9 +114,9 @@ if __name__ == '__main__':
     hand = 'AC 2S 3C 4H 5S'
     assert PokerHand.from_str(hand).straight() == True
     hand = '8C TS JC 9H 7S'
-    print  "Hand '{}': Is straight? ".format(hand), \
-            PokerHand.from_str(hand).straight()
-    print "Hand {}': ordered".format(hand), PokerHand.from_str(hand).ordered
+    print("Hand '{}': Is straight? ".format(hand), \
+           PokerHand.from_str(hand).straight())
+    print("Hand {}': ordered".format(hand), PokerHand.from_str(hand).ordered)
     hand = '8C 8S 8D 8H 7S'
-    print "Hand {}': Four of a kind".format(hand), \
-            PokerHand.from_str(hand).four_of_a_kind()
+    print("Hand {}': Four of a kind".format(hand), \
+            PokerHand.from_str(hand).four_of_a_kind())
