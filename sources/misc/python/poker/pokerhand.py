@@ -95,7 +95,9 @@ class PokerHand(BasePokerHand):
 
         return len(set(self._ranks)) == 5 and \
                 max(self._ranks) - min(self._ranks) == 4 or \
-                max(self._ranks) == 14 and sum(self._ranks) == 28
+                (len(set(self._ranks)) == 5 and \
+                    max(self._ranks) == 14 and \
+                    sum(self._ranks) == 28)
 
     def straight_flush(self):
         return self.flush() and self.straight()
@@ -159,3 +161,14 @@ if __name__ == '__main__':
         ph11 = PokerHand.from_str(h11, sep=":")
         ph21 = PokerHand.from_str(h21, sep=":")
         print (h11, ph11.score, h21, ph21.score, ph11 > ph21)
+
+    print ("============")
+    h1 = 'TH:9S'
+    h2 = '2D:2S'
+    for c in combinations('4C:AC:9D:6D:6S'.split(':'), 3):
+        h11 = ":".join([h1, ":".join(c)])
+        h21 = ":".join([h2, ":".join(c)])
+        ph11 = PokerHand.from_str(h11, sep=":")
+        ph21 = PokerHand.from_str(h21, sep=":")
+        print (h11, ph11.score, h21, ph21.score, ph11 > ph21)
+

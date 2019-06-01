@@ -118,7 +118,7 @@ class PokerTable:
 
 if __name__ == '__main__':
 
-    for i in range(5000):
+    for i in range(500):
         table = PokerTable(8, deck(shuffled=True))
         table.run_one_pot()
-        #print(table)
+        print(table)
